@@ -18,7 +18,7 @@ Configuration for the container environment.
 ##########################################################################
 
 from .base import *  # noqa
-from base import PROJECT
+from .base import PROJECT
 
 
 ##########################################################################
