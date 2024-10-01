@@ -1,7 +1,10 @@
 # Parlance
 
-**An LLM evaluation tool that uses a model-to-model qualitative comparison metric.**
+[![Tests](https://github.com/rotationalio/parlance/actions/workflows/tests.yaml/badge.svg)](https://github.com/rotationalio/parlance/actions/workflows/tests.yaml)
+[![Containers](https://github.com/rotationalio/parlance/actions/workflows/containers.yaml/badge.svg)](https://github.com/rotationalio/parlance/actions/workflows/containers.yaml)
+[![CodeQL](https://github.com/rotationalio/parlance/actions/workflows/codeql.yaml/badge.svg)](https://github.com/rotationalio/parlance/actions/workflows/codeql.yaml)
 
+**An LLM evaluation tool that uses a model-to-model qualitative comparison metric.**
 
 ## Getting Started
 

@@ -77,7 +77,7 @@ def parse_bool(val):
 ##########################################################################
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = environ_setting("PARLANCE_SECRET_KEY", required=True)
+SECRET_KEY = environ_setting("SECRET_KEY", required=True)
 
 
 ##########################################################################
@@ -87,8 +87,7 @@ SECRET_KEY = environ_setting("PARLANCE_SECRET_KEY", required=True)
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 DATABASES = {
-    "default": dj_database_url.parse(
-        environ_setting("PARLANCE_DATABASE_URL", required=True, default=""),
+    "default": dj_database_url.config(
         conn_max_age=600,
         conn_health_checks=True,
         test_options={"NAME": "parlance_testing"},
@@ -107,7 +106,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 ##########################################################################
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = parse_bool(environ_setting("PARLANCE_DEBUG", default=True))
+DEBUG = parse_bool(environ_setting("DJANGO_DEBUG", default=True))
 
 # Specify hosts in production settings
 ALLOWED_HOSTS = []
@@ -223,12 +222,12 @@ REST_FRAMEWORK = {
 ## Logging and Error Reporting
 ##########################################################################
 
-ADMINS = [("Parlance Admin", environ_setting("PARLANCE_ADMIN_EMAIL", ""))]
+ADMINS = [("Parlance Admin", environ_setting("ADMIN_EMAIL", ""))]
 
-SERVER_EMAIL = environ_setting("PARLANCE_SERVER_EMAIL", default="")
+SERVER_EMAIL = environ_setting("SERVER_EMAIL", default="")
 EMAIL_USE_TLS = True
-EMAIL_HOST = environ_setting("PARLANCE_EMAIL_HOST", default="")
-EMAIL_HOST_USER = environ_setting("PARLANCE_EMAIL_HOST_USER", default="")
-EMAIL_HOST_PASSWORD = environ_setting("PARLANCE_EMAIL_HOST_PASSWORD", default="")
-EMAIL_PORT = environ_setting("PARLANCE_EMAIL_PORT", default=587)
+EMAIL_HOST = environ_setting("EMAIL_HOST", default="")
+EMAIL_HOST_USER = environ_setting("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = environ_setting("EMAIL_HOST_PASSWORD", default="")
+EMAIL_PORT = environ_setting("EMAIL_PORT", default=587)
 EMAIL_SUBJECT_PREFIX = "[PARLANCE] "

@@ -6,7 +6,7 @@
 .python-version
 Dockerfile
 .dockerignore
-LICENSE.txt
+LICENSE
 README.md
 
 # Byte-compiled / optimized / DLL files
