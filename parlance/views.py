@@ -18,8 +18,9 @@ Site level views and pages not associated with a specific app.
 ##########################################################################
 
 from django.views.generic import TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 
-class Dashboard(TemplateView):
+class Dashboard(LoginRequiredMixin, TemplateView):
 
     template_name = "site/dashboard.html"

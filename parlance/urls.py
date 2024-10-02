@@ -31,7 +31,7 @@ Including another URLconf
 ##########################################################################
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 
 from parlance.views import Dashboard
 
@@ -41,6 +41,12 @@ from parlance.views import Dashboard
 ##########################################################################
 
 urlpatterns = [
+    # Application Pages
     path("", Dashboard.as_view(), name="dashboard"),
-    path('admin/', admin.site.urls),
+
+    # Admin URLs
+    path("admin/", admin.site.urls),
+
+    # Authentication URLs
+    path("accounts/", include("django.contrib.auth.urls")),
 ]

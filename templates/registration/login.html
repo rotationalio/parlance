@@ -1,0 +1,55 @@
+{% extends "registration/base.html" %}
+
+{% block heading-text %}Sign in{% endblock %}
+{% block subheading-text %}Welcome to Parlance!{% endblock %}
+
+{% block auth %}
+<!-- sign-in form -->
+<form role="form" action="{% url 'login' %}" method="post">
+  <!-- username -->
+  <div class="form-group">
+    <label class="form-label">
+      Username
+    </label>
+
+    <input id="username" name="username" type="text" class="form-control" placeholder="Enter your username" />
+  </div>
+
+  <!-- password -->
+  <div class="form-group">
+    <div class="row">
+      <div class="col">
+        <label class="form-label">
+          Password
+        </label>
+      </div>
+      <div class="col-auto">
+        <a href="{% url 'password_reset' %}" class="form-text small text-muted">
+          Forgot password?
+        </a>
+      </div>
+    </div>
+
+    <div class="input-group input-group-merge">
+      <input id="password" name="password" class="form-control" type="password" placeholder="Enter your password" />
+      <span class="input-group-text toggle-password"><i id="eye-icon" class="fe fe-eye"></i></span>
+    </div>
+  </div>
+
+  <!-- submit -->
+  <button type="submit" value="login" class="btn btn-lg w-100 btn-primary mb-3">
+    Sign in
+  </button>
+
+  <!-- hidden form fields -->
+  <input type="hidden" name="next" value="{{ next }}" />
+  {% csrf_token %}
+
+  <!-- request access -->
+  <div class="text-center">
+    <small class="text-muted text-center">
+      Don't have an account yet? <a href="mailto:support@rotational.io">Contact us</a>.
+    </small>
+  </div>
+</form>
+{% endblock %}
