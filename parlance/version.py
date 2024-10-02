@@ -51,10 +51,7 @@ def get_version(short=False, revision=False):
             )
         )
 
-    vers = ["{major}.{minor}".format(**__version_info__)]
-
-    if __version_info__['micro']:
-        vers.append(".{micro}".format(**__version_info__))
+    vers = ["{major}.{minor}.{micro}".format(**__version_info__)]
 
     if __version_info__['releaselevel'] != 'final' and not short:
         vers.append('{}{}'.format(__version_info__['releaselevel'][0],
