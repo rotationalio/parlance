@@ -1,3 +1,14 @@
+# parlance.urls
+# Defines all of the routes and associated views with the urls for the app.
+#
+# Author:   Benjamin Bengfort <benjamin@rotational.io>
+# Created:  Tue Oct 01 21:19:17 2024 -0500
+#
+# Copyright (C) 2024 Rotational Labs, Inc.
+# For license information, see LICENSE
+#
+# ID: urls.py [] benjamin@rotational.io $
+
 """
 URL configuration for parlance project.
 
@@ -14,9 +25,22 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
+##########################################################################
+## Imports
+##########################################################################
+
 from django.contrib import admin
 from django.urls import path
 
+from parlance.views import Dashboard
+
+
+##########################################################################
+## URL Patterns
+##########################################################################
+
 urlpatterns = [
+    path("", Dashboard.as_view(), name="dashboard"),
     path('admin/', admin.site.urls),
 ]
