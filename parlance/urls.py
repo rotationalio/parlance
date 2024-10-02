@@ -50,3 +50,13 @@ urlpatterns = [
     # Authentication URLs
     path("accounts/", include("django.contrib.auth.urls")),
 ]
+
+
+##########################################################################
+## Error handling
+##########################################################################
+
+handler400 = "parlance.views.bad_request"
+handler403 = "parlance.views.permission_denied"
+handler404 = "parlance.views.not_found"
+handler500 = "parlance.views.server_error"
