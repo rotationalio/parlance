@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block body-class %}d-flex align-items-center bg-auth border-top border-top-2 border-primary{% endblock %}
+
+{% block body %}
+<!-- authentication content -->
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-5 col-xl-4 my-5">
+
+    {% block content %}
+    <!-- heading -->
+    {% block heading %}
+    <h1 class="display-4 text-center mb-3">
+      {% block heading-text %}Registration{% endblock %}
+    </h1>
+
+    <!-- subheading -->
+    <p class="text-muted text-center mb-5">
+      {% block subheading-text%}Authentication Pages{% endblock %}
+    </p>
+    {% endblock %}
+
+    <div class="alerts">
+    {% block alerts %}{% endblock %}
+    </div>
+
+    {% block auth %}{% endblock %}
+    {% endblock %}
+    </div><!-- col ends -->
+  </div><!-- row ends -->
+</div><!-- authentication content ends -->
+{% endblock %}
+
+{% block javascripts %}
+{{ block.super }}
+<script src="{% static 'js/auth.js' %}" type="text/javascript"></script>
+{% endblock %}

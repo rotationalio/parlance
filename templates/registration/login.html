@@ -1,0 +1,89 @@
+{% extends "registration/base.html" %}
+
+{% block heading-text %}Sign in{% endblock %}
+{% block subheading-text %}Welcome to Parlance!{% endblock %}
+
+{% block alerts %}
+  {% if form.errors %}
+  <div class="alert alert-danger alert-dismissible fade show">
+    Credentials invalid. Please try again.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="close"></button>
+  </div>
+  {% endif %}
+
+  {% if messages %}
+  {% for message in messages %}
+  {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+  <div class="alert alert-danger alert-dismissible fade show">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="close"></button>
+  </div>
+  {% endif %}
+  {% endfor %}
+  {% endif %}
+
+  {% if next %}
+  {% if user.is_authenticated %}
+  <div class="alert alert-warning alert-dismissible fade show">
+    You do not have access to this page.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="close"></button>
+  </div>
+  {% else %}
+  <div class="alert alert-info alert-dismissible fade show">
+    Please login to access Parlance.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="close"></button>
+  </div>
+  {% endif %}
+  {% endif %}
+{% endblock %}
+
+{% block auth %}
+<!-- sign-in form -->
+<form role="form" action="{% url 'login' %}" method="post">
+  <!-- username -->
+  <div class="form-group">
+    <label class="form-label">
+      Username
+    </label>
+
+    <input id="username" name="username" type="text" class="form-control" placeholder="Enter your username" />
+  </div>
+
+  <!-- password -->
+  <div class="form-group">
+    <div class="row">
+      <div class="col">
+        <label class="form-label">
+          Password
+        </label>
+      </div>
+      <div class="col-auto">
+        <a href="{% url 'password_reset' %}" class="form-text small text-muted">
+          Forgot password?
+        </a>
+      </div>
+    </div>
+
+    <div class="input-group input-group-merge">
+      <input id="password" name="password" class="form-control" type="password" placeholder="Enter your password" />
+      <span class="input-group-text toggle-password"><i id="eye-icon" class="fe fe-eye"></i></span>
+    </div>
+  </div>
+
+  <!-- submit -->
+  <button type="submit" value="login" class="btn btn-lg w-100 btn-primary mb-3">
+    Sign in
+  </button>
+
+  <!-- hidden form fields -->
+  <input type="hidden" name="next" value="{{ next }}" />
+  {% csrf_token %}
+
+  <!-- request access -->
+  <div class="text-center">
+    <small class="text-muted text-center">
+      Don't have an account yet? <a href="mailto:support@rotational.io">Contact us</a>.
+    </small>
+  </div>
+</form>
+{% endblock %}

@@ -1,1 +1,5 @@
 /* The primary CSS file for the Parlance application */
+
+.toggle-password {
+    cursor: pointer;
+}
