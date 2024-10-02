@@ -22,9 +22,11 @@
     </p>
     {% endblock %}
 
-    {% block auth %}
+    <div class="alerts">
+    {% block alerts %}{% endblock %}
+    </div>
 
-    {% endblock %}
+    {% block auth %}{% endblock %}
     {% endblock %}
     </div><!-- col ends -->
   </div><!-- row ends -->
@@ -32,6 +34,6 @@
 {% endblock %}
 
 {% block javascripts %}
-<script src="{% static 'js/jquery-3.7.1.min.js' %}" type="text/javascript"></script>
+{{ block.super }}
 <script src="{% static 'js/auth.js' %}" type="text/javascript"></script>
 {% endblock %}

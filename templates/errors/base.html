@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block body-class %}d-flex align-items-center bg-auth border-top border-top-2 border-primary{% endblock %}
+
+{% block body %}
+  <!-- page content -->
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-12 col-md-5 col-xl-4 my-5">
+        {% block error %}
+        <div class="text-center">
+          <!-- preheading -->
+          <h6 class="text-uppercase text-muted mb-4">
+            {% block preheading %}404 error{% endblock %}
+          </h6>
+
+          <!-- heading -->
+          <h1 class="display-4 mb-3">
+            {% block heading %}There’s no page here 😭{% endblock %}
+          </h1>
+
+          <!-- subheading -->
+          <p class="text-muted mb-4">
+            {% block subheading %}Looks like you ended up here by accident?{% endblock %}
+          </p>
+
+          <!-- bail out -->
+          {% block bailout %}
+          <a href="{% url 'dashboard' %}" class="btn btn-lg btn-primary">
+            Return to your dashboard
+          </a>
+          {% endblock %}
+        </div>
+        {% endblock %}
+      </div>
+    </div>
+  </div><!-- end page content -->
+{% endblock %}
+
+{% block modals %}
+  {# Empty out modals to prevent more template than necessary from rendering #}
+{% endblock %}
+
+{% block javascripts %}
+  {# Empty out JavaScripts to prevent further errors #}
+{% endblock %}
