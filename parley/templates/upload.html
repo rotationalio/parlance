@@ -1,4 +1,5 @@
 {% extends 'page.html' %}
+{% load version %}
 
 {% block content %}
   <div class="container-fluid">
@@ -24,12 +25,34 @@
                 <!-- subtitle -->
                 <p class="mt-1 text-muted">
                   Data can be imported into Parlance in JSON lines format where each line is an object to be created or updated.
-                  It is strongly recommended that each object has a UUID id to ensure correct linkages in the database.
+                  It is strongly recommended that each object has a UUID ID to ensure correct linkages in the database.
                 </p>
               </div>
             </div>
           </div>
         </div><!-- header ends -->
+
+        <div class="alerts">
+          {% if form.errors %}
+          {% for _, errors in form.errors.items %}
+            {% for error in errors %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <strong>Invalid Input:</strong> {{ error }}.
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+          {% endfor %}
+          {% endif %}
+
+          {% if messages %}
+          {% for message in messages %}
+          <div class="alert {{ message.level|alert_level }} alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="close"></button>
+          </div>
+          {% endfor %}
+          {% endif %}
+        </div>
 
         <!-- form -->
         <form class="mb-4" method="POST" enctype="multipart/form-data">
@@ -46,7 +69,7 @@
             <!-- multi-file uploader card -->
             <div class="card">
               <div class="card-body">
-                <div class="dropzone dropzone-multiple" data-dropzone='{"url": "https://", "forceFallback": true}'>
+                <div class="dropzone dropzone-multiple" data-dropzone='{"url": "{% url "upload" %}", "forceFallback": true, "autoProcessQueue": false, "uploadMultiple": true, "parallelUploads": 100, "maxFiles": 100}'>
 
                   <!-- fallback -->
                   <div class="fallback">
