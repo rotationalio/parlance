@@ -36,6 +36,11 @@ class UploaderFormView(FormView):
             raise Exception("not implemented yet")
         return super().form_valid(form)
 
+    def form_invalid(self, form):
+        if not self.ready:
+            raise Exception("form invalid")
+        return super().form_valid(form)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["page_id"] = "upload"

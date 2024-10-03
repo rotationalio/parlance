@@ -22,4 +22,4 @@ from django import forms
 
 class Uploader(forms.Form):
 
-    file = forms.FileField()
+    jsonl = forms.FileField(allow_empty_file=False)

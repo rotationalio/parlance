@@ -1,1 +1,122 @@
 {% extends 'page.html' %}
+
+{% block content %}
+  <div class="container-fluid">
+      <div class="row justify-content-center">
+        <div class="col-12 col-lg-10 col-xl-8">
+
+        <!-- header -->
+        <div class="header mt-md-5">
+          <div class="header-body">
+            <div class="row align-items-center">
+              <div class="col">
+
+                <!-- pretitle -->
+                <h6 class="header-pretitle">
+                  Utilities
+                </h6>
+
+                <!-- title -->
+                <h1 class="header-title">
+                  Data Uploader
+                </h1>
+
+                <!-- subtitle -->
+                <p class="mt-1 text-muted">
+                  Data can be imported into Parlance in JSON lines format where each line is an object to be created or updated.
+                  It is strongly recommended that each object has a UUID id to ensure correct linkages in the database.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div><!-- header ends -->
+
+        <!-- form -->
+        <form class="mb-4" method="POST" enctype="multipart/form-data">
+          <!-- file uploader dropzone -->
+          <div class="form-group">
+            <label class="form-label mb-1">
+              JSONL Data
+            </label>
+
+            <small class="form-text text-muted">
+              Ensure that every JSON object is on a single line and that it has a valid <code>"type"</code> field.
+            </small>
+
+            <!-- multi-file uploader card -->
+            <div class="card">
+              <div class="card-body">
+                <div class="dropzone dropzone-multiple" data-dropzone='{"url": "https://", "forceFallback": true}'>
+
+                  <!-- fallback -->
+                  <div class="fallback">
+                    <div class="form-group mt-4">
+                      <label class="form-label" for="id_jsonl">Specify Files to Upload</label>
+                      <input class="form-control" type="file" id="id_jsonl" name=jsonl required multiple>
+                    </div>
+                  </div>
+
+                  <!-- preview -->
+                  <ul class="dz-preview dz-preview-multiple list-group list-group-lg list-group-flush">
+                    <li class="list-group-item px-0">
+                      <div class="row align-items-center">
+                        <div class="col-auto">
+
+                          <!-- image -->
+                          <!-- TODO: how to make correct images for file icons? -->
+                          <div class="avatar">
+                            <img class="avatar-img rounded" src="data:image/svg+xml,%3csvg3c/svg%3e" alt="..." data-dz-thumbnail>
+                          </div>
+
+                        </div>
+                        <div class="col ms-n3">
+
+                          <!-- filename and size -->
+                          <h4 class="mb-1" data-dz-name>...</h4>
+                          <p class="small text-muted mb-0" data-dz-size></p>
+
+                        </div>
+                        <div class="col-auto">
+
+                          <!-- dropdown actions menu -->
+                          <div class="dropdown">
+
+                            <!-- toggle icon -->
+                            <a href="#" class="dropdown-ellipses dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                              <i class="fe fe-more-vertical"></i>
+                            </a>
+
+                            <!-- menu -->
+                            <div class="dropdown-menu dropdown-menu-end">
+                              <a href="#" class="dropdown-item" data-dz-remove>
+                                Remove
+                              </a>
+                            </div>
+
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+
+                </div>
+              </div>
+            </div><!-- dropzone card ends -->
+          </div>
+
+          <!-- divider -->
+          <hr class="my-5">
+
+          <!-- hidden fields -->
+          {% csrf_token %}
+
+          <!-- submit button -->
+          <button type="submit" value="submit" class="btn w-100 btn-primary">
+            Start Upload
+          </button>
+        </form>
+
+      </div><!-- col ends -->
+    </div><!-- row ends -->
+  </div><!-- container ends -->
+{% endblock %}
