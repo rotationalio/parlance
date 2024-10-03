@@ -142,6 +142,13 @@ class Uploader(forms.Form):
                     f"unknown type \"{row['type']}\" on line {r} of {f.name}"
                 )
 
+            # Handle Foreign Keys
+            if rtype == Prompt:
+                self.link_reference(row, 'evaluation', Evaluation)
+            elif rtype == Response:
+                self.link_reference(row, 'model', LLM)
+                self.link_reference(row, 'prompt', Prompt)
+
             counts.increment(f.name, *rtype.objects.get_or_create(**row))
 
     def read_jsonlines(self, path):
@@ -159,3 +166,11 @@ class Uploader(forms.Form):
             for chunk in f.chunks():
                 fh.write(chunk)
         return path
+
+    def link_reference(self, row, key, model):
+        try:
+            row[key] = model.objects.get(id=row[key])
+        except (KeyError, model.DoesNotExist):
+            raise ParlanceUploadError(
+                f"could not associate \"{row.get(key, '')}\" with existing {model.__name__} object"
+            )

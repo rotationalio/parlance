@@ -113,7 +113,7 @@ class LLM(BaseModel):
     )
 
     trained_on = models.DateTimeField(
-        null=False, blank=False,
+        null=True, default=None, blank=True,
         help_text="The timestamp that the model started training"
     )
 
@@ -135,6 +135,9 @@ class LLM(BaseModel):
         if self.trained_on is None or self.training_duration is None:
             return None
         return self.trained_on + self.training_duration
+
+    def __str__(self):
+        return self.name
 
 
 class Evaluation(BaseModel):
@@ -162,14 +165,14 @@ class Evaluation(BaseModel):
     )
 
     description = models.TextField(
-        null=False,
+        null=True,
         blank=True,
-        default="",
+        default=None,
         help_text="Any notes or other descriptive information about the evaluation",
     )
 
     active = models.BooleanField(
-        default=True,
+        default=True, null=False,
         help_text="This prompt set should be used in evaluations of new models",
     )
 
@@ -179,6 +182,9 @@ class Evaluation(BaseModel):
         get_latest_by = "created"
         verbose_name = "evaluation"
         verbose_name_plural = "evaluations"
+
+    def __str__(self):
+        return self.name
 
 
 class Prompt(BaseModel):
@@ -316,8 +322,9 @@ class Response(BaseModel):
     )
 
     inference_on = models.DateTimeField(
-        null=False,
-        blank=False,
+        null=True,
+        blank=True,
+        default=None,
         help_text="The timestamp that the LLM started the inferencing",
     )
 
