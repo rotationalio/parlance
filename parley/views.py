@@ -16,3 +16,27 @@ Parley views and controllers.
 ##########################################################################
 ## Imports
 ##########################################################################
+
+from django.views.generic.edit import FormView
+from parley.forms import Uploader
+
+
+##########################################################################
+## Views
+##########################################################################
+
+class UploaderFormView(FormView):
+
+    ready = False
+    template_name = "upload.html"
+    form_class = Uploader
+
+    def form_valid(self, form):
+        if not self.ready:
+            raise Exception("not implemented yet")
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_id"] = "upload"
+        return context
