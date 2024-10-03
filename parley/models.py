@@ -92,7 +92,7 @@ class LLM(BaseModel):
         help_text="Information about the quantization of the model, if any",
     )
 
-    tokenizer_info = models.JSONField(
+    tokenizer_config = models.JSONField(
         null=True, default=None, blank=True,
         help_text="The standardized tokenization info of the model",
     )
