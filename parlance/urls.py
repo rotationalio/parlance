@@ -34,6 +34,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 from parlance.views import Dashboard
+from parley.views import UploaderFormView
 
 
 ##########################################################################
@@ -43,6 +44,7 @@ from parlance.views import Dashboard
 urlpatterns = [
     # Application Pages
     path("", Dashboard.as_view(), name="dashboard"),
+    path("upload/", UploaderFormView.as_view(), name="upload"),
 
     # Admin URLs
     path("admin/", admin.site.urls),

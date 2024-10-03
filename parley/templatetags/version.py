@@ -17,7 +17,9 @@ TODO: move to parlance specific app when created.
 ##########################################################################
 
 from parlance import get_version
+
 from django import template
+from django.contrib.messages import constants as messages
 
 register = template.Library()
 
@@ -30,3 +32,13 @@ register = template.Library()
 @register.simple_tag()
 def version():
     return get_version(short=True, revision=False)
+
+
+@register.filter(name="alert_level")
+def alert_level(level):
+    return {
+        messages.INFO: "alert-info",
+        messages.SUCCESS: "alert-success",
+        messages.WARNING: "alert-warning",
+        messages.ERROR: "alert-danger",
+    }.get(level, "alert-dark")

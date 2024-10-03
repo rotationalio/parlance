@@ -1,7 +1,37 @@
 {% extends 'page.html' %}
 
-{% block page %}
-  <div class="container-fluid">
-    <p>Hello World</p>
-  </div>
-{% endblock %}
+{% block content %}
+    {% block page-head %}
+    <!-- page header -->
+    <div class="header">
+      <div class="container-fluid">
+        <div class="header-body">
+          <div class="row align-items-end">
+            <div class="col">
+              <!-- pretitle -->
+              <h6 class="header-pretitle">
+                Overview
+              </h6>
+
+              <h1 class="header-title">
+                Dashboard
+              </h1>
+            </div>
+
+            <div class="col-auto">
+              <a href="#!" class="btn btn-primary lift">
+                Create Report
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- page header ends -->
+    {% endblock %}
+
+    {% block page %}
+    <!-- page content -->
+    <div class="container-fluid">
+    </div><!-- page content ends -->
+    {% endblock %}
+  {% endblock %}
