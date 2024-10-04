@@ -40,7 +40,7 @@ CSRF_TRUSTED_ORIGINS = [
 MEDIA_ROOT = PROJECT / "tmp" / "media"
 
 ## Static files served by WhiteNoise nostatic server
-STATIC_ROOT = PROJECT / "tmp" / "static"
+STATIC_ROOT = PROJECT / "tmp" / "assets"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Debugging email without SMTP
@@ -53,7 +53,7 @@ EMAIL_FILE_PATH = PROJECT / "tmp" / "outbox"
 ##########################################################################
 
 sentry_sdk.init(
-    dsn=environ_setting("PARLANCE_SENTRY_DSN"),
+    dsn=environ_setting("SENTRY_DSN"),
     integrations=[DjangoIntegration()],
 
     # Get release from Heroku environment or specify develop release

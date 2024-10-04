@@ -30,7 +30,7 @@ DEBUG = False
 
 ## Hosts
 ALLOWED_HOSTS = [
-    "parlance.rotational.dev",
+    "parlance.rotational.app",
 ]
 
 ## Static files served by WhiteNoise

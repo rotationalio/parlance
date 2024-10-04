@@ -35,11 +35,11 @@ DEBUG = False
 
 ## Hosts
 ALLOWED_HOSTS = [
-    "parlance.rotational.dev",
+    "parlance.rotational.app",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://parlance.rotational.dev",
+    "https://parlance.rotational.app",
 ]
 
 ## SSL is terminated at Traefik so all requests will be http in the k8s cluster.
@@ -51,7 +51,7 @@ USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 ## Static files served by WhiteNoise
-STATIC_ROOT = PROJECT / "static"
+STATIC_ROOT = PROJECT / "assets"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 
@@ -60,7 +60,7 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 ##########################################################################
 
 sentry_sdk.init(
-    dsn=environ_setting("PARLANCE_SENTRY_DSN"),
+    dsn=environ_setting("SENTRY_DSN"),
     integrations=[DjangoIntegration()],
 
     # Get release from Heroku environment or specify develop release
@@ -72,5 +72,5 @@ sentry_sdk.init(
     send_default_pii=True,
 
     # Set a uniform sample rate
-    traces_sample_rate=1.0,
+    traces_sample_rate=0.5,
 )

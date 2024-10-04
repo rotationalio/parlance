@@ -36,8 +36,8 @@ CSRF_TRUSTED_ORIGINS = [
 STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 
 ## Content without side effects
-MEDIA_ROOT = "/tmp/ledger_test/media"
-STATIC_ROOT = "/tmp/ledger_test/static"
+MEDIA_ROOT = "/tmp/parlance_test/media"
+STATIC_ROOT = "/tmp/parlance_test/static"
 
 
 ##########################################################################
