@@ -22,8 +22,10 @@ from django.contrib import messages
 from django.urls import reverse_lazy
 from django.utils.safestring import mark_safe
 from django.views.generic.edit import FormView
+from django.views.generic import DetailView
 
 from parley.forms import Uploader
+from parley.models import Response
 from parley.exceptions import ParlanceUploadError
 
 
@@ -61,3 +63,19 @@ class UploaderFormView(FormView):
         Ensures that all database operations during a request are all or nothing.
         """
         return super().post(*args, **kwargs)
+
+
+##########################################################################
+## Response Views
+##########################################################################
+
+class ResponseDetail(DetailView):
+
+    model = Response
+    template_name = "response_detail.html"
+    context_object_name = "response"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_id"] = "response"
+        return context
