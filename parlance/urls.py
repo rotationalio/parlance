@@ -33,8 +33,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-from parlance.views import Dashboard
 from parley.views import UploaderFormView
+from parlance.views import Dashboard, AccountSettings, AccountProfile
 
 
 ##########################################################################
@@ -45,10 +45,10 @@ urlpatterns = [
     # Application Pages
     path("", Dashboard.as_view(), name="dashboard"),
     path("upload/", UploaderFormView.as_view(), name="upload"),
-
+    path("account/profile", AccountProfile.as_view(), name="account-profile"),
+    path("account/settings", AccountSettings.as_view(), name="account-settings"),
     # Admin URLs
     path("admin/", admin.site.urls),
-
     # Authentication URLs
     path("accounts/", include("django.contrib.auth.urls")),
 ]

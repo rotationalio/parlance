@@ -1,0 +1,153 @@
+{% extends 'page.html' %}
+{% load gravatar %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-10 col-xl-8">
+      <!-- Header -->
+      <div class="header mt-md-5">
+        <div class="header-body">
+          <div class="row align-items-center">
+            <div class="col">
+
+              <!-- Pretitle -->
+              <h6 class="header-pretitle">
+                Overview
+              </h6>
+
+              <!-- Title -->
+              <h1 class="header-title">
+                Account
+              </h1>
+
+            </div>
+          </div> <!-- / .row -->
+          <div class="row align-items-center">
+            <div class="col">
+
+              <!-- Nav -->
+              <ul class="nav nav-tabs nav-overflow header-tabs">
+                <li class="nav-item">
+                  <a href="account-general.html" class="nav-link active">
+                    General
+                  </a>
+                </li>
+              </ul>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+    <!-- Form -->
+    <form>
+
+      <div class="row justify-content-between align-items-center">
+        <div class="col">
+          <div class="row align-items-center">
+            <div class="col-auto">
+
+              <!-- Avatar -->
+              <div class="avatar">
+                <img class="avatar-img rounded-circle" src="{{ user|gravatar }}" alt="gravatar">
+              </div>
+
+            </div>
+            <div class="col ms-n2">
+
+              <!-- Heading -->
+              <h4 class="mb-1">
+                Your avatar
+              </h4>
+
+              <!-- Text -->
+              <small class="text-muted">
+                Is managed by the Gravatar: your profile for the web.
+              </small>
+
+            </div>
+          </div> <!-- / .row -->
+        </div>
+        <div class="col-auto">
+
+          <!-- Button -->
+          <a href="https://gravatar.com/" target="_blank" class="btn btn-sm btn-primary">
+            <span class="fe fe-external-link"></span> Manage
+          </a>
+
+        </div>
+      </div> <!-- / .row -->
+
+      <!-- Divider -->
+      <hr class="my-5">
+
+      <div class="row">
+        <div class="col-12 col-md-6">
+
+          <!-- First name -->
+          <div class="form-group">
+
+            <!-- Label -->
+            <label class="form-label">
+              First name
+            </label>
+
+            <!-- Input -->
+            <input type="text" class="form-control" value="{{ user.first_name }}">
+
+          </div>
+
+        </div>
+        <div class="col-12 col-md-6">
+
+          <!-- Last name -->
+          <div class="form-group">
+
+            <!-- Label -->
+            <label class="form-label">
+              Last name
+            </label>
+
+            <!-- Input -->
+            <input type="text" class="form-control" value="{{ user.last_name }}">
+
+          </div>
+
+        </div>
+        <div class="col-12">
+
+          <!-- Email address -->
+          <div class="form-group">
+
+            <!-- Label -->
+            <label class="mb-1">
+              Email address
+            </label>
+
+            <!-- Form text -->
+            <small class="form-text text-muted">
+              This contact will be shown to others publicly, so choose it carefully.
+            </small>
+
+            <!-- Input -->
+            <input type="email" class="form-control" value={{ user.email }}>
+
+          </div>
+
+        </div>
+      </div> <!-- / .row -->
+
+      <!-- Button -->
+      <button class="btn btn-primary" disabled>
+        Save changes
+      </button>
+
+    </form>
+
+      </div>
+    </div>
+  </div>
+</div><!-- page ends -->
+{% endblock %}
