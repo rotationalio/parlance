@@ -1,0 +1,189 @@
+{% extends 'page.html' %}
+{% load static %}
+
+{% block content %}
+  <!-- header -->
+  <div class="header">
+    <div class="container-fluid">
+
+      <div class="header-body">
+        <div class="row align-items-center">
+          <div class="col ms-n3 ms-md-n2">
+            <h6 class="header-pretitle">
+              Evaluation
+            </h6>
+
+            <h1 class="header-title">
+              {{ response.prompt.evaluation.name }}
+            </h1>
+
+            <p class="text-muted mt-2 mb-0">
+              <small>{{ response.prompt.evaluation.task }}</small>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- header ends -->
+
+  <!-- response detail content -->
+  <div class="container-fluid">
+
+    <!-- model detail -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body">
+            <div class="row align-items-center">
+              <div class="col-auto">
+                <a href="project-overview.html" class="avatar avatar-lg avatar-4by3">
+                  <img src="{% static 'img/llama-instruct.png' %}" alt="model" class="avatar-img rounded">
+                </a>
+              </div>
+              <div class="col ms-n2">
+                <h4 class="mt-2 mb-2">
+                  {{ response.model.name  }}
+                </h4>
+                <p class="small text-muted mb-1">
+                  {{ response.model.description }}
+                </p>
+                <div class="row align-items-center g-0">
+                  <div class="col-auto">
+                    <div class="small me-2">29%</div>
+                  </div>
+                  <div class="col">
+                    <div class="progress progress-sm">
+                      <div class="progress-bar" role="progressbar" style="width: 29%" aria-valuenow="29" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-auto">
+                <span class="badge bg-primary-soft ms-auto ml-4">v{{ response.model.version }}</span>
+              </div>
+              <div class="col-auto">
+
+                    <!-- Dropdown -->
+                    <div class="dropdown">
+                      <a href="#" class="dropdown-ellipses dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fe fe-more-vertical"></i>
+                      </a>
+                      <div class="dropdown-menu dropdown-menu-end">
+                        <a href="#!" class="dropdown-item">
+                          Action
+                        </a>
+                        <a href="#!" class="dropdown-item">
+                          Another action
+                        </a>
+                        <a href="#!" class="dropdown-item">
+                          Something else here
+                        </a>
+                      </div>
+                    </div>
+
+                  </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- model detail ends -->
+
+    <!-- prompt detail -->
+    <div class="row">
+      <div class="col-12">
+
+        <div class="card" id="prompt">
+          <div class="card-header">
+            <h4 class="card-header-title">
+              Prompt
+            </h4>
+            <button class="btn btn-sm btn-secondary" data-bs-toggle="collapse" data-bs-target="#promptText">
+              Toggle
+            </button>
+          </div>
+          <div id="promptText" class="card-body collapse" data-bs-parent="#prompt">
+            <pre>{{ response.prompt.system }}</pre>
+            <pre>{{ response.prompt.prompt }}</pre>
+          </div>
+        </div>
+      </div>
+    </div><!-- prompt detail ends -->
+
+    <!-- prompt detail -->
+    <div class="row">
+      <div class="col-12">
+
+        <div class="card" id="response">
+          <div class="card-header">
+            <h4 class="card-header-title">
+              Model Response
+            </h4>
+            <button class="btn btn-sm btn-secondary" data-bs-toggle="collapse" data-bs-target="#responseText">
+              Toggle
+            </button>
+          </div>
+          <div id="responseText" class="card-body collapse show" data-bs-parent="#response">
+            <pre>{{ response.output }}</pre>
+          </div>
+          <div class="card-footer">
+            {% if response.valid_output is None %}
+              <span class="badge bg-secondary ms-auto">Not Validated</span>
+            {% elif response.valid_output %}
+              <span class="badge bg-success-soft ms-auto">
+                <i class="fe fe-check"></i>
+                Valid {{ response.prompt.expected_output }}
+              </span>
+            {% else %}
+              <span class="badge bg-danger-soft ms-auto">
+                <i class="fe fe-x"></i>
+                Invalid {{ response.prompt.expected_output }}
+              </span>
+            {% endif %}
+
+            {% if response.leaks_sensitive is None %}
+              <span class="badge bg-secondary ms-auto">Not Scanned</span>
+            {% elif response.leaks_sensitive %}
+              <span class="badge bg-danger-soft ms-auto">
+                <i class="fe fe-unlock"></i>
+                Contains Sensitive Data
+              </span>
+            {% else %}
+              <span class="badge bg-success-soft ms-auto">
+                <i class="fe fe-lock"></i>
+                No Sensitive Leaks
+              </span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div><!-- prompt detail ends -->
+    <hr />
+    <div class="nav row align-items-center">
+      <div class="col-auto">
+
+        <!-- Button -->
+        {% with prev=response.get_previous %}
+        <a class="btn btn-lg btn-white" {% if prev %}href="{{ prev.get_absolute_url }}"{% else %}disabled{% endif %}>
+          <span class="fe fe-chevrons-left"></span> Prev
+        </a>
+        {% endwith %}
+      </div>
+      <div class="col text-center">
+
+        <!-- Step -->
+        <h6 class="text-uppercase text-muted mb-0">{{ response.model.responses.count }} Responses</h6>
+
+      </div>
+      <div class="col-auto">
+
+        <!-- Button -->
+        {% with next=response.get_previous %}
+        <a class="btn btn-lg btn-primary" {% if next %}href="{{ next.get_absolute_url }}"{% else %}disabled{% endif %}>
+          Next <span class="fe fe-chevrons-right"></span>
+        </a>
+        {% endwith %}
+      </div>
+    </div>
+
+  </div><!-- response detail content ends -->
+{% endblock %}

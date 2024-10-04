@@ -20,6 +20,7 @@ Parley app models and database definition.
 import uuid
 
 from django.db import models
+from django.urls import reverse
 from .validators import validate_semver
 
 
@@ -341,3 +342,18 @@ class Response(BaseModel):
         get_latest_by = "created"
         verbose_name = "response"
         verbose_name_plural = "responses"
+
+    def get_previous(self):
+        try:
+            return self.get_previous_by_created()
+        except self.DoesNotExist:
+            return None
+
+    def get_next(self):
+        try:
+            return self.get_next_by_created()
+        except self.DoesNotExist:
+            return None
+
+    def get_absolute_url(self):
+        return reverse("response-detail", args=(self.id,))
