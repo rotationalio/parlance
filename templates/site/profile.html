@@ -1,0 +1,56 @@
+{% extends 'page.html' %}
+{% load gravatar %}
+{% load static %}
+
+{% block content %}
+<div class="header">
+
+  <!-- Image -->
+  <img src="{% static 'img/profile-cover.jpg' %}" class="header-img-top" alt="">
+
+  <div class="container-fluid">
+
+    <!-- Body -->
+    <div class="header-body mt-n5 mt-md-n6">
+      <div class="row align-items-end">
+        <div class="col-auto">
+
+          <!-- Avatar -->
+          <div class="avatar avatar-xxl header-avatar-top">
+            <img src="{{ user|gravatar:256 }}" alt="gravatar" class="avatar-img rounded-circle border border-4 border-body">
+          </div>
+
+        </div>
+        <div class="col mb-3 ms-n3 ms-md-n2">
+
+          <!-- Pretitle -->
+          <h6 class="header-pretitle">
+            Team
+          </h6>
+
+          <!-- Title -->
+          <h1 class="header-title">
+            {{ user.get_full_name }}
+          </h1>
+
+        </div>
+      </div> <!-- / .row -->
+      <div class="row align-items-center">
+        <div class="col">
+
+          <!-- Nav -->
+          <ul class="nav nav-tabs nav-overflow header-tabs">
+            <li class="nav-item">
+              <a href="#" class="nav-link active">
+                Evaluations
+              </a>
+            </li>
+          </ul>
+
+        </div>
+      </div>
+    </div> <!-- / .header-body -->
+
+  </div>
+</div>
+{% endblock %}

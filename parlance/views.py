@@ -47,6 +47,24 @@ class Dashboard(TemplateView):
         return context
 
 
+class AccountSettings(TemplateView):
+
+    template_name = "site/account.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_id"] = "account"
+
+
+class AccountProfile(TemplateView):
+
+    template_name = "site/profile.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_id"] = "profile"
+
+
 ##########################################################################
 ## Error Views
 ##########################################################################

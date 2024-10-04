@@ -23,14 +23,14 @@
         <!-- Toggle -->
         <a href="#" id="sidebarIcon" class="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           <div class="avatar avatar-sm avatar-online">
-            <img src="{{ user|gravatar }}" class="avatar-img rounded-circle" alt="...">
+            <img src="{{ user|gravatar }}" class="avatar-img rounded-circle" alt="gravatar" />
           </div>
         </a>
 
         <!-- Menu -->
         <div class="dropdown-menu dropdown-menu-end" aria-labelledby="sidebarIcon">
-          <a href="./profile-posts.html" class="dropdown-item">Profile</a>
-          <a href="./account-general.html" class="dropdown-item">Settings</a>
+          <a href="{% url 'account-profile' %}" class="dropdown-item">Profile</a>
+          <a href="{% url 'account-settings' %}" class="dropdown-item">Settings</a>
           <hr class="dropdown-divider">
           <a href="#" class="logout dropdown-item">Logout</a>
         </div>
@@ -130,8 +130,8 @@
 
             <!-- Menu -->
             <div class="dropdown-menu" aria-labelledby="sidebarIconCopy">
-              <a href="./profile-posts.html" class="dropdown-item">Profile</a>
-              <a href="./account-general.html" class="dropdown-item">Settings</a>
+              <a href="{% url 'account-profile' %}" class="dropdown-item">Profile</a>
+              <a href="{% url 'account-settings' %}" class="dropdown-item">Settings</a>
               <hr class="dropdown-divider">
               <a href="#" class="logout dropdown-item">Logout</a>
             </div>
