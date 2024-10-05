@@ -25,5 +25,10 @@ from django.apps import AppConfig
 ##########################################################################
 
 class ParleyConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
+
     name = "parley"
+    verbose_name = "parlance"
+    default_auto_field = "django.db.models.BigAutoField"
+
+    def ready(self):
+        import parley.signals # noqa
