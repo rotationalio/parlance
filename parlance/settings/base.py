@@ -158,6 +158,9 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATICFILES_DIRS = (PROJECT / "static",)
 
+# Media files (uploads)
+MEDIA_URL = "uploads/"
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
