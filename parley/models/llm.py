@@ -279,6 +279,9 @@ class ModelEvaluation(BaseModel):
             model=self.model, prompt__evaluation=self.evaluation
         )
 
+    def __str__(self):
+        return f"{self.evaluation.name} for {self.model.name}"
+
 
 class Response(BaseModel):
     """
