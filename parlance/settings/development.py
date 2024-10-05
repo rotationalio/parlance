@@ -37,10 +37,10 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:8000",
 ]
 
-MEDIA_ROOT = PROJECT / "tmp" / "media"
+MEDIA_ROOT = PROJECT / "tmp" / "uploads"
 
 ## Static files served by WhiteNoise nostatic server
-STATIC_ROOT = PROJECT / "tmp" / "assets"
+STATIC_ROOT = PROJECT / "tmp" / "static"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Debugging email without SMTP

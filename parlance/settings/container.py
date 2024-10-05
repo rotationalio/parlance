@@ -19,6 +19,7 @@ Configuration for the container environment.
 
 from .base import *  # noqa
 from .base import PROJECT
+from .base import environ_setting
 
 
 ##########################################################################
@@ -34,5 +35,8 @@ ALLOWED_HOSTS = [
 ]
 
 ## Static files served by WhiteNoise
-STATIC_ROOT = PROJECT / "assets"
+STATIC_ROOT = environ_setting("STATIC_ROOT", default=PROJECT / "storage" / "static")
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+## Media files and uploads
+MEDIA_ROOT = environ_setting("MEDIA_ROOT", default=PROJECT / "storage" / "uploads")

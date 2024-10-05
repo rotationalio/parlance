@@ -44,7 +44,7 @@ CONFDIR = Path(__file__).resolve()
 PROJECT = CONFDIR.parent.parent.parent
 
 
-def environ_setting(name, required=False, default=None):
+def environ_setting(name, default=None, required=False):
     """
     Fetch setting from the environment or use the default. If required is set to True
     then a warning is raised that Django is not configured properly.
@@ -158,6 +158,9 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATICFILES_DIRS = (PROJECT / "static",)
 
+# Media files (uploads)
+MEDIA_URL = "uploads/"
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -228,7 +231,7 @@ REST_FRAMEWORK = {
 ## Logging and Error Reporting
 ##########################################################################
 
-ADMINS = [("Parlance Admin", environ_setting("ADMIN_EMAIL", ""))]
+ADMINS = [("Parlance Admin", environ_setting("ADMIN_EMAIL", default=""))]
 
 SERVER_EMAIL = environ_setting("SERVER_EMAIL", default="")
 EMAIL_USE_TLS = True

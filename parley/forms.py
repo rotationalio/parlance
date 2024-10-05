@@ -25,7 +25,7 @@ from django import forms
 from collections import defaultdict
 from parley.exceptions import ParlanceUploadError
 from django.core.exceptions import ValidationError
-from parley.models import LLM, Evaluation, Prompt, Response
+from parley.models import LLM, Evaluation, Prompt, Response, Sensitive
 
 
 ##########################################################################
@@ -135,6 +135,7 @@ class Uploader(forms.Form):
                 'evaluation': Evaluation,
                 'prompt': Prompt,
                 'response': Response,
+                'sensitive': Sensitive,
             }.get(row.pop('type').strip().lower(), None)
 
             if rtype is None:
