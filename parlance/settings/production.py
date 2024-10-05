@@ -51,11 +51,11 @@ USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 ## Static files served by WhiteNoise
-STATIC_ROOT = environ_setting("STATIC_ROOT", PROJECT / "storage" / "static")
+STATIC_ROOT = environ_setting("STATIC_ROOT", default=PROJECT / "storage" / "static")
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 ## Media files and uploads
-MEDIA_ROOT = environ_setting("MEDIA_ROOT", PROJECT / "storage" / "uploads")
+MEDIA_ROOT = environ_setting("MEDIA_ROOT", default=PROJECT / "storage" / "uploads")
 
 
 ##########################################################################
