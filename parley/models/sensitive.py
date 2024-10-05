@@ -17,11 +17,11 @@ Handling of sensitive data and validation.
 ## Imports
 ##########################################################################
 
-from .base import BaseModel
+from .base import TimestampedModel
 from django.db import models
 
 
-class Sensitive(BaseModel):
+class Sensitive(TimestampedModel):
     """
     Any data or information that should be considered sensitive and not included
     in any output across any evaluation. These can be specific strings or they can
@@ -32,6 +32,7 @@ class Sensitive(BaseModel):
         blank=False,
         null=False,
         max_length=255,
+        unique=True,
         help_text="The search term to look for sensitive data in output",
     )
 

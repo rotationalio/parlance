@@ -134,6 +134,10 @@ class LLM(BaseModel):
         help_text="The amount of time it took to train the model",
     )
 
+    evaluations = models.ManyToManyField(
+        'parley.Evaluation', through='parley.ModelEvaluation',
+    )
+
     class Meta:
         db_table = "llms"
         ordering = ("-trained_on",)
@@ -264,6 +268,7 @@ class ModelEvaluation(BaseModel):
         db_table = "model_evaluations"
         ordering = ("-created",)
         get_latest_by = "created"
+        unique_together = ('model', 'evaluation')
 
     @property
     def image(self):
@@ -367,7 +372,7 @@ class Response(BaseModel):
         null=True,
         default=None,
         blank=True,
-        help_text="Does the output contain gramatically correct, understandable language?",
+        help_text="Does the output contain grammatically correct, understandable language?",
     )
 
     max_new_tokens = models.IntegerField(
@@ -392,12 +397,17 @@ class Response(BaseModel):
         help_text="The amount of time it took to perform the inference",
     )
 
+    reviewers = models.ManyToManyField(
+        "parley.ReviewTask", through="parley.ResponseReview"
+    )
+
     class Meta:
         db_table = "responses"
         ordering = ("-created",)
         get_latest_by = "created"
         verbose_name = "response"
         verbose_name_plural = "responses"
+        unique_together = ("model", "prompt")
 
     @property
     def evaluation(self):

@@ -73,6 +73,16 @@ class Evaluation(BaseModel):
         help_text="This prompt set should be used in evaluations of new models",
     )
 
+    llms = models.ManyToManyField(
+        "parley.LLM",
+        through="parley.ModelEvaluation",
+    )
+
+    reviewers = models.ManyToManyField(
+        "auth.User",
+        through="parley.ReviewTask",
+    )
+
     class Meta:
         db_table = "evaluations"
         ordering = ("-created",)

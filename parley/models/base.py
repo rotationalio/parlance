@@ -54,3 +54,24 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+class TimestampedModel(models.Model):
+    """
+    Adds created and modified timestamps to sub-models.
+    """
+
+    created = models.DateTimeField(
+        auto_now_add=True,
+        editable=False,
+        help_text="The timestamp that the object was created",
+    )
+
+    modified = models.DateTimeField(
+        auto_now=True,
+        editable=False,
+        help_text="The timestamp that the object was last modified",
+    )
+
+    class Meta:
+        abstract = True
