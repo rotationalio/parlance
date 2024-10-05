@@ -18,10 +18,19 @@ Parley app administrative configuration.
 ##########################################################################
 
 from django.contrib import admin
-from .models import LLM, Evaluation, Prompt, Response
+
+from .models import Sensitive
+from .models import Evaluation, Prompt
+from .models import ReviewTask, ResponseReview
+from .models import LLM, ModelEvaluation, Response
+
 
 # Register your models here.
-admin.site.register(LLM)
+admin.site.register(Sensitive)
 admin.site.register(Evaluation)
 admin.site.register(Prompt)
+admin.site.register(ReviewTask)
+admin.site.register(ResponseReview)
+admin.site.register(LLM)
+admin.site.register(ModelEvaluation)
 admin.site.register(Response)

@@ -40,7 +40,7 @@ def model_evaluation_linkage(sender, instance, created, *args, **kwargs):
             "evaluation": instance.prompt.evaluation
         }
 
-        if not ModelEvaluation.objects.exists(**kwargs):
+        if not ModelEvaluation.objects.filter(**kwargs).exists():
             ModelEvaluation.objects.create(**kwargs)
 
 
