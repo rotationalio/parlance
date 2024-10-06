@@ -18,6 +18,7 @@ The abstract base model for all parley models.
 ##########################################################################
 
 from django.db import models
+from django.urls import reverse
 
 from .base import BaseModel
 from .enums import SimilarityMetric, OutputFormat
@@ -92,6 +93,9 @@ class Evaluation(BaseModel):
 
     def __str__(self):
         return self.name
+
+    def get_absolute_url(self):
+        return reverse("evaluation-detail", args=(self.id,))
 
 
 class Prompt(BaseModel):
@@ -171,7 +175,15 @@ class Prompt(BaseModel):
 
     class Meta:
         db_table = "prompts"
-        ordering = ("order", "-created")
+        ordering = ("evaluation__id", "order", "-created")
         get_latest_by = "created"
         verbose_name = "prompt"
         verbose_name_plural = "prompts"
+
+    def __str__(self):
+        if self.order:
+            return f"{self.evaluation.name} Prompt #{self.order}"
+        return f"{self.evaluation.name} ({self.id})"
+
+    def get_absolute_url(self):
+        return reverse("prompt-detail", args=(self.id,))

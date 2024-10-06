@@ -7,6 +7,38 @@
 
   <!-- begin primary page content -->
   <div class="main-content">
-  {% block content %}{% endblock %}
+  {% block content %}
+    {% block page-header %}
+    <!-- page header -->
+    <div class="header">
+      <div class="container-fluid">
+        <div class="header-body">
+          <div class="row align-items-end">
+            <div class="col">
+              <!-- pretitle -->
+              <h6 class="header-pretitle">
+                {% block page-pretitle %}Pretitle{% endblock %}
+              </h6>
+
+              <h1 class="header-title">
+                {% block page-title %}Title{% endblock %}
+              </h1>
+            </div>
+
+            <div class="col-auto">
+              <!-- add dashboard control buttons here -->
+              {% block page-controls %}{% endblock %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- page header ends -->
+    {% endblock %}
+
+    <!-- page content -->
+    <div class="container-fluid">
+      {% block page %}{% endblock %}
+    </div><!-- inner page content ends -->
+  {% endblock %}
   </div><!-- primary page content ends -->
 {% endblock %}

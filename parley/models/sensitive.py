@@ -42,6 +42,12 @@ class Sensitive(TimestampedModel):
         help_text="If the term is a regular expression to analyze the output on",
     )
 
+    case_sensitive = models.BooleanField(
+        null=False,
+        default=False,
+        help_text="Do not use case insensitive search to locate the sensitive term",
+    )
+
     class Meta:
         db_table = "sensitive"
         ordering = ("-created",)
