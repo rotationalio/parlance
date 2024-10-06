@@ -1,170 +1,145 @@
 {% extends 'page.html' %}
 
-{% block content %}
-    {% block page-head %}
-    <!-- page header -->
-    <div class="header">
-      <div class="container-fluid">
-        <div class="header-body">
-          <div class="row align-items-end">
-            <div class="col">
-              <!-- pretitle -->
-              <h6 class="header-pretitle">
-                Overview
-              </h6>
 
-              <h1 class="header-title">
-                Dashboard
-              </h1>
-            </div>
+{% block page-pretitle %}Overview{% endblock %}
+{% block page-title %}Dashboard{% endblock %}
 
-            <div class="col-auto">
-              <!-- add dashboard control buttons here -->
-            </div>
-          </div>
+{% block page %}
+  <!-- cards -->
+  <div class="row">
+    <div class="col-12 col-lg-6 col-xl">
+      {% include "components/statcard.html" with title="LLMs" value=n_llms icon="fe-cpu" %}
+    </div>
+    <div class="col-12 col-lg-6 col-xl">
+      {% include "components/statcard.html" with title="Evaluations" value=n_evaluations icon="fe-clipboard" %}
+    </div>
+    <div class="col-12 col-lg-6 col-xl">
+      {% include "components/statcard.html" with title="Prompts" value=n_prompts icon="fe-file-plus" %}
+    </div>
+    <div class="col-12 col-lg-6 col-xl">
+      {% include "components/statcard.html" with title="Responses" value=n_responses icon="fe-message-square" %}
+    </div>
+  </div><!-- cards ends -->
+
+  <!-- evaluations list -->
+  <div class="row">
+    <div class="col-12">
+
+      <div class="card" data-list='{"valueNames": ["name"]}'>
+        <div class="card-header">
+          <h4 class="card-header-title">
+            Active Evaluations
+          </h4>
+
+        </div>
+        <div class="card-body">
+          <ul class="list-group list-group-lg list-group-flush list my-n4">
+            {% for evaluation in evaluations %}
+            <li class="list-group-item">
+              <div class="row align-items-center">
+                <div class="col-auto">
+                  <!-- icon -->
+                  <a href="#!" class="avatar avatar-lg">
+                    <span class="avatar-title rounded bg-white text-secondary">
+                      <span class="fe fe-clipboard"></span>
+                    </span>
+                  </a>
+                </div>
+                <div class="col ms-n2">
+
+                    <!-- Title -->
+                    <h4 class="mb-1 name">
+                      <a href="#!">{{ evaluation.name }}</a>
+                    </h4>
+
+                    <!-- Text -->
+                    <p class="card-text small text-muted mb-1">
+                      {{ evaluation.task }}
+                    </p>
+
+                    <!-- Time -->
+                    <p class="card-text small text-muted">
+                      {{ evaluation.prompts.count }} prompts
+                    </p>
+
+                  </div>
+                  <div class="col-auto">
+
+                    <!-- Button -->
+                    <a href="#!" class="btn btn-sm btn-white d-none d-md-inline-block">
+                      Download
+                    </a>
+
+                  </div>
+                  <div class="col-auto">
+
+                    <!-- Dropdown -->
+                    <div class="dropdown">
+                      <a href="#" class="dropdown-ellipses dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fe fe-more-vertical"></i>
+                      </a>
+                      <div class="dropdown-menu dropdown-menu-end">
+                        <a href="#!" class="dropdown-item">
+                          Action
+                        </a>
+                        <a href="#!" class="dropdown-item">
+                          Another action
+                        </a>
+                        <a href="#!" class="dropdown-item">
+                          Something else here
+                        </a>
+                      </div>
+                    </div>
+
+                </div>
+              </div>
+            </li>
+            {% empty %}
+            <li class="list-group-item">
+
+            </li>
+            {% endfor %}
+          </ul>
         </div>
       </div>
-    </div><!-- page header ends -->
-    {% endblock %}
 
-    {% block page %}
-    <!-- page content -->
-    <div class="container-fluid">
+    </div>
+  </div><!-- evaluations list ends -->
 
-      <!-- cards -->
-      <div class="row">
-        <div class="col-12 col-lg-6 col-xl">
-          {% include "components/statcard.html" with title="LLMs" value=n_llms icon="fe-cpu" %}
+  <!-- llm model list -->
+  <div class="row">
+    <div class="col-12">
+
+      <div class="card">
+        <div class="card-header">
+          <h4 class="card-header-title">LLM Models</h4>
         </div>
-        <div class="col-12 col-lg-6 col-xl">
-          {% include "components/statcard.html" with title="Evaluations" value=n_evaluations icon="fe-clipboard" %}
+
+        <div class="table-responsive mb-0">
+          <table class="table table-sm table-nowrap card-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th class="text-center">Type</th>
+                <th class="text-center">Responses</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for model in llms %}
+              <tr>
+                <td>
+                  <a class="text-reset" href="{{ model.get_absolute_url }}">{{ model.name }}</a>
+                  <span class="badge bg-dark ms-auto">v{{ model.version }}</span>
+                </td>
+                <td class="text-center">{% if model.is_adapter_model %}LoRA{% else %}Base{% endif %}</td>
+                <td class="text-center">{{model.responses.count}}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
-        <div class="col-12 col-lg-6 col-xl">
-          {% include "components/statcard.html" with title="Prompts" value=n_prompts icon="fe-file-plus" %}
-        </div>
-        <div class="col-12 col-lg-6 col-xl">
-          {% include "components/statcard.html" with title="Responses" value=n_responses icon="fe-message-square" %}
-        </div>
-      </div><!-- cards ends -->
+      </div>
 
-      <!-- evaluations list -->
-      <div class="row">
-        <div class="col-12">
-
-          <div class="card" data-list='{"valueNames": ["name"]}'>
-            <div class="card-header">
-              <h4 class="card-header-title">
-                Active Evaluations
-              </h4>
-
-            </div>
-            <div class="card-body">
-              <ul class="list-group list-group-lg list-group-flush list my-n4">
-                {% for evaluation in evaluations %}
-                <li class="list-group-item">
-                  <div class="row align-items-center">
-                    <div class="col-auto">
-                      <!-- icon -->
-                      <a href="#!" class="avatar avatar-lg">
-                        <span class="avatar-title rounded bg-white text-secondary">
-                          <span class="fe fe-clipboard"></span>
-                        </span>
-                      </a>
-                    </div>
-                    <div class="col ms-n2">
-
-                        <!-- Title -->
-                        <h4 class="mb-1 name">
-                          <a href="#!">{{ evaluation.name }}</a>
-                        </h4>
-
-                        <!-- Text -->
-                        <p class="card-text small text-muted mb-1">
-                          {{ evaluation.task }}
-                        </p>
-
-                        <!-- Time -->
-                        <p class="card-text small text-muted">
-                          {{ evaluation.prompts.count }} prompts
-                        </p>
-
-                      </div>
-                      <div class="col-auto">
-
-                        <!-- Button -->
-                        <a href="#!" class="btn btn-sm btn-white d-none d-md-inline-block">
-                          Download
-                        </a>
-
-                      </div>
-                      <div class="col-auto">
-
-                        <!-- Dropdown -->
-                        <div class="dropdown">
-                          <a href="#" class="dropdown-ellipses dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fe fe-more-vertical"></i>
-                          </a>
-                          <div class="dropdown-menu dropdown-menu-end">
-                            <a href="#!" class="dropdown-item">
-                              Action
-                            </a>
-                            <a href="#!" class="dropdown-item">
-                              Another action
-                            </a>
-                            <a href="#!" class="dropdown-item">
-                              Something else here
-                            </a>
-                          </div>
-                        </div>
-
-                    </div>
-                  </div>
-                </li>
-                {% empty %}
-                <li class="list-group-item">
-
-                </li>
-                {% endfor %}
-              </ul>
-            </div>
-          </div>
-
-        </div>
-      </div><!-- evaluations list ends -->
-
-      <!-- llm model list -->
-      <div class="row">
-        <div class="col-12">
-
-          <div class="card">
-            <div class="card-header">
-              <h4 class="card-header-title">LLM Models</h4>
-            </div>
-
-            <div class="table-responsive mb-0">
-              <table class="table table-sm table-nowrap card-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th class="text-center">Type</th>
-                    <th class="text-center">Responses</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for model in llms %}
-                  <tr>
-                    <td>{{model.name}} <span class="badge bg-dark ms-auto">v{{ model.version }}</span></td>
-                    <td class="text-center">{% if model.is_adapter_model %}LoRA{% else %}Base{% endif %}</td>
-                    <td class="text-center">{{model.responses.count}}</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-        </div>
-      </div><!-- llm model list ends -->
-    </div><!-- page content ends -->
-    {% endblock %}
-  {% endblock %}
+    </div>
+  </div><!-- llm model list ends -->
+{% endblock %}

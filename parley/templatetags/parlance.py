@@ -1,15 +1,13 @@
-# parley.templatetags.version
-# Adds version information to the page.
+# parley.templatetags.parlance
+# Template tag helpers for parlance apps
 #
 # Author:   Benjamin Bengfort <benjamin@rotational.io>
 # Created:  Tue Oct 01 21:52:22 2024 -0500
 #
-# ID: version.py [] benjamin@bengfort.com $
+# ID: parlance.py [] benjamin@bengfort.com $
 
 """
-Adds version information to the page.
-
-TODO: move to parlance specific app when created.
+Template tag helpers for parlance apps
 """
 
 ##########################################################################

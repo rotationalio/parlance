@@ -155,6 +155,9 @@ class LLM(BaseModel):
     def __str__(self):
         return self.name
 
+    def get_absolute_url(self):
+        return reverse("llm-detail", args=(self.id,))
+
 
 class ModelEvaluation(BaseModel):
     """
@@ -281,6 +284,9 @@ class ModelEvaluation(BaseModel):
 
     def __str__(self):
         return f"{self.evaluation.name} for {self.model.name}"
+
+    def get_absolute_url(self):
+        return reverse("llm-evaluation-detail", args=(self.id,))
 
 
 class Response(BaseModel):
@@ -411,6 +417,9 @@ class Response(BaseModel):
         verbose_name = "response"
         verbose_name_plural = "responses"
         unique_together = ("model", "prompt")
+
+    def __str__(self):
+        return f"{self.model.name} response for {str(self.prompt)}"
 
     @property
     def evaluation(self):
