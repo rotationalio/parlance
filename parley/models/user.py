@@ -150,6 +150,13 @@ class ResponseReview(TimestampedModel):
         help_text="Does the output contain grammatically correct, understandable language?",
     )
 
+    notes = models.TextField(
+        null=True,
+        default=None,
+        blank=True,
+        help_text="Any notes the reviewer would like to add about the output",
+    )
+
     class Meta:
         db_table = "response_reviews"
         ordering = ("-created",)

@@ -2,3 +2,8 @@
 
 {% block page-pretitle %}Models{% endblock %}
 {% block page-title %}{{ llm.name }}{% endblock %}
+{% block page-controls %}
+  <a href="{% url 'admin:parley_llm_change' llm.id %}" class="btn btn-primary" title="Edit LLM Model">
+    <span class="fe fe-edit"></span>
+  </a>
+{% endblock %}
