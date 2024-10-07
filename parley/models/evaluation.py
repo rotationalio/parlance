@@ -98,6 +98,11 @@ class Prompt(BaseModel):
     A prompt is a single instance of an input to an LLM.
     """
 
+    title = models.CharField(
+        null=True, default=None, blank=True,
+        help_text="A title to specify for identifying the prompt",
+    )
+
     system = models.TextField(
         null=True,
         default=None,
@@ -176,8 +181,12 @@ class Prompt(BaseModel):
         verbose_name_plural = "prompts"
 
     def __str__(self):
+        if self.title:
+            return self.title
+
         if self.order:
             return f"{self.evaluation.name} Prompt #{self.order}"
+
         return f"{self.evaluation.name} ({self.id})"
 
     def get_absolute_url(self):
