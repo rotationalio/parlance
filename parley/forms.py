@@ -187,8 +187,12 @@ class CreateReviewForm(forms.Form):
     def save(self):
         try:
             ReviewTask.objects.create(
-                user=User.objects.get(pk=self.cleaned_data["user"]),
-                evaluation=ModelEvaluation.objects.get(pk=self.cleaned_data["evaluation"]),
+                user=User.objects.get(
+                    pk=self.cleaned_data["user"]
+                ),
+                model_evaluation=ModelEvaluation.objects.get(
+                    pk=self.cleaned_data["evaluation"]
+                ),
             )
         except (User.DoesNotExist, ModelEvaluation.DoesNotExist):
             return

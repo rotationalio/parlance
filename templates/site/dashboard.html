@@ -91,10 +91,10 @@
                         <a href="{% url 'admin:parley_reviewtask_change' evaluation.pk %}" class="dropdown-item">
                           Edit in CMS
                         </a>
-                        <a href="{% url 'evaluation-detail' evaluation.evaluation.evaluation.pk %}" class="dropdown-item">
+                        <a href="{% url 'evaluation-detail' evaluation.evaluation.pk %}" class="dropdown-item">
                           View Evaluation
                         </a>
-                        <a href="{% url 'llm-detail' evaluation.evaluation.model.pk %}" class="dropdown-item">
+                        <a href="{% url 'llm-detail' evaluation.model.pk %}" class="dropdown-item">
                           View Model
                         </a>
                       </div>

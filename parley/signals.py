@@ -78,8 +78,8 @@ def check_review_task_completion(sender, instance, created, *args, **kwargs):
         changed = True
 
     if not task.completed_on:
-        n_prompts = task.evaluation.prompts().count()
-        if n_prompts == 0 or task.reviews.count() == n_prompts:
+        n_prompts = task.prompts().count()
+        if n_prompts == 0 or task.response_reviews.count() == n_prompts:
             task.completed_on = timezone.localtime()
             changed = True
 
@@ -88,10 +88,23 @@ def check_review_task_completion(sender, instance, created, *args, **kwargs):
 
 
 @receiver(post_delete, sender=ResponseReview, dispatch_uid="check_review_task_unfinished")
-def check_review_task_unfinished(sender, instance, created, *args, **kwargs):
+def check_review_task_unfinished(sender, instance, *args, **kwargs):
     task = instance.review
     if task.completed_on:
-        n_prompts = task.evaluation.prompts().count()
-        if n_prompts > 0 and task.reviews.count() < n_prompts:
+        n_prompts = task.prompts().count()
+        if n_prompts == 0:
+            return
+
+        n_reviews = task.response_reviews.count()
+        changed = False
+
+        if n_reviews < n_prompts:
             task.completed_on = None
+            changed = True
+
+        if n_reviews == 0:
+            task.started_on = None
+            changed = True
+
+        if changed:
             task.save()

@@ -426,7 +426,7 @@ class Response(BaseModel):
 
     class Meta:
         db_table = "responses"
-        ordering = ("-created",)
+        ordering = ("created",)
         get_latest_by = "created"
         verbose_name = "response"
         verbose_name_plural = "responses"

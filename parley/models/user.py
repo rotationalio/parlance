@@ -37,7 +37,7 @@ class ReviewTask(TimestampedModel):
         help_text="The user that is conducting the evaluation",
     )
 
-    evaluation = models.ForeignKey(
+    model_evaluation = models.ForeignKey(
         "parley.ModelEvaluation",
         null=False,
         on_delete=models.CASCADE,
@@ -63,11 +63,18 @@ class ReviewTask(TimestampedModel):
         db_table = "review_tasks"
         ordering = ("-created",)
         get_latest_by = "created"
-        unique_together = ("user", "evaluation")
+        unique_together = ("user", "model_evaluation")
 
     @property
-    def task(self):
-        return self.evaluation.evaluation.task
+    def evaluation(self):
+        return self.model_evaluation.evaluation
+
+    @property
+    def model(self):
+        return self.model_evaluation.model
+
+    def prompts(self):
+        return self.model_evaluation.prompts()
 
     @property
     def is_started(self):
@@ -79,14 +86,14 @@ class ReviewTask(TimestampedModel):
 
     @property
     def percent_complete(self):
-        n_prompts = self.evaluation.prompts().count()
+        n_prompts = self.prompts().count()
         if n_prompts == 0:
             return 0
         n_reviews = self.response_reviews.count()
         return int((float(n_reviews) / float(n_prompts)) * 100)
 
     def __str__(self):
-        return f"{self.evaluation.evaluation.name} ({self.evaluation.model.name})"
+        return f"{self.evaluation.name} ({self.model.name})"
 
     def get_absolute_url(self):
         return reverse("review-task", args=(self.id,))

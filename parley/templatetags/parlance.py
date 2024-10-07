@@ -46,6 +46,6 @@ def alert_level(level):
 @register.simple_tag()
 def get_review_task(user, evaluation):
     try:
-        return ReviewTask.objects.get(user=user, evaluation=evaluation)
+        return ReviewTask.objects.get(user=user, model_evaluation=evaluation)
     except ReviewTask.DoesNotExist:
         return None
