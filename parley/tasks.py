@@ -21,6 +21,7 @@ TODO: convert to celery jobs and tasks.
 
 from typing import Iterable
 from django.utils import timezone
+from collections import defaultdict
 
 from parley.models.enums import OutputFormat
 from parley.models import ModelEvaluation, Response, Sensitive
@@ -30,11 +31,42 @@ from parley.models import ModelEvaluation, Response, Sensitive
 ## Tasks
 ##########################################################################
 
+METRIC_FIELDS = [
+    "is_similar", "label_correct", "valid_output_type",
+    "leaks_sensitive", "is_confabulation", "is_readable",
+]
+
+
+METRICS_MAP = {
+    "is_similar": ("n_is_similar", "n_not_similar"),
+    "label_correct": ("n_labeled_correctly", "n_labeled_incorrectly"),
+    "valid_output_type": ("n_valid_output_type", "n_invalid_output_type"),
+    "leaks_sensitive": ("n_leaks_sensitive", "n_no_sensitive_leaks"),
+    "is_confabulation": ("n_confabulations", "n_not_confabulation"),
+    "is_readable": ("n_readable", "n_not_readable"),
+}
+
+
 def cache_metrics(me: ModelEvaluation):
     """
     Runs through all current responses and reviewer annotations for a model evaluation
     and caches the metrics on the model for display purposes.
     """
+
+    me.n_prompts = me.prompts().count()
+    me.n_responses = me.responses().count()
+
+    # Count all of the metrics across all responses
+    counts = defaultdict(lambda: defaultdict(int))
+    for response in me.responses():
+        for field in METRIC_FIELDS:
+            counts[field][getattr(response, field)] += 1
+
+    # Assign the counts to their metrics
+    for field, (pos, neg) in METRICS_MAP.items():
+        count = counts[field]
+        setattr(me, pos, count.get(True, None))
+        setattr(me, neg, count.get(False, None))
 
     me.metrics_cached = True
     me.metrics_last_cached_on = timezone.localtime()
