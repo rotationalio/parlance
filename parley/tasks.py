@@ -56,6 +56,8 @@ def cache_metrics(me: ModelEvaluation):
     me.n_prompts = me.prompts().count()
     me.n_responses = me.responses().count()
 
+    # TODO: Handle annotator agreement for reviewers
+
     # Count all of the metrics across all responses
     counts = defaultdict(lambda: defaultdict(int))
     for response in me.responses():
