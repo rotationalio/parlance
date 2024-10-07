@@ -23,13 +23,14 @@ from django.views import View
 from django.db import transaction
 from django.contrib import messages
 from django.urls import reverse_lazy
-from django.http import HttpResponse, Http404
 from django.utils.safestring import mark_safe
 from django.views.generic.edit import FormView
 from django.views.generic import DetailView, ListView
+from django.core.exceptions import SuspiciousOperation
+from django.http import HttpResponse, Http404, HttpResponseNotAllowed
 
-from parley.forms import Uploader
 from parley.exceptions import ParlanceUploadError
+from parley.forms import Uploader, CreateReviewForm
 from parley.models import LLM, Response, Evaluation, Prompt
 
 
@@ -173,3 +174,23 @@ class ResponseDetail(DetailView):
         context = super().get_context_data(**kwargs)
         context["page_id"] = "response"
         return context
+
+
+##########################################################################
+## Review Tasks
+##########################################################################
+
+class CreateReviewTask(FormView):
+
+    form_class = CreateReviewForm
+    success_url = reverse_lazy("dashboard")
+
+    def form_valid(self, form):
+        form.save()
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        raise SuspiciousOperation("unable to create review task for logged in user")
+
+    def get(self, *args, **kwargs):
+        return HttpResponseNotAllowed(['POST'])

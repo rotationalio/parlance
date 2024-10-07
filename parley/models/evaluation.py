@@ -79,11 +79,6 @@ class Evaluation(BaseModel):
         through="parley.ModelEvaluation",
     )
 
-    reviewers = models.ManyToManyField(
-        "auth.User",
-        through="parley.ReviewTask",
-    )
-
     class Meta:
         db_table = "evaluations"
         ordering = ("-created",)

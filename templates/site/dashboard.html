@@ -25,7 +25,7 @@
   <div class="row">
     <div class="col-12">
 
-      <div class="card" data-list='{"valueNames": ["name"]}'>
+      <div class="card">
         <div class="card-header">
           <h4 class="card-header-title">
             Active Evaluations
@@ -96,7 +96,7 @@
             </li>
             {% empty %}
             <li class="list-group-item">
-
+              <p>No Active Review Tasks</p>
             </li>
             {% endfor %}
           </ul>
@@ -120,6 +120,7 @@
             <thead>
               <tr>
                 <th>Name</th>
+                <th class="text-center">Version</th>
                 <th class="text-center">Type</th>
                 <th class="text-center">Responses</th>
               </tr>
@@ -129,10 +130,14 @@
               <tr>
                 <td>
                   <a class="text-reset" href="{{ model.get_absolute_url }}">{{ model.name }}</a>
-                  <span class="badge bg-dark ms-auto">v{{ model.version }}</span>
                 </td>
+                <td class="text-center">v{{ model.version }}</td>
                 <td class="text-center">{% if model.is_adapter_model %}LoRA{% else %}Base{% endif %}</td>
                 <td class="text-center">{{model.responses.count}}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="4">No Models Loaded</td>
               </tr>
               {% endfor %}
             </tbody>

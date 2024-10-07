@@ -15,6 +15,7 @@ Template tag helpers for parlance apps
 ##########################################################################
 
 from parlance import get_version
+from parley.models import ReviewTask
 
 from django import template
 from django.contrib.messages import constants as messages
@@ -40,3 +41,11 @@ def alert_level(level):
         messages.WARNING: "alert-warning",
         messages.ERROR: "alert-danger",
     }.get(level, "alert-dark")
+
+
+@register.simple_tag()
+def get_review_task(user, evaluation):
+    try:
+        return ReviewTask.objects.get(user=user, evaluation=evaluation)
+    except ReviewTask.DoesNotExist:
+        return None
