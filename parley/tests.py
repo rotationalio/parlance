@@ -23,7 +23,8 @@ from django.core.exceptions import ValidationError
 from datetime import datetime, timedelta
 
 from parley.validators import validate_semver
-from parley.models import LLM
+from parley.tasks import cyberjudge_almost
+from parley.models import LLM, Sensitive
 
 
 @pytest.mark.parametrize("value", [
@@ -77,3 +78,78 @@ def test_llm_model_training_completed():
     )
 
     assert m.training_completed == datetime(2024, 2, 14, 12, 29, 32, 765000)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "This is some random text that does has the term Rotational in it.",
+        "This is some random\nmultiline text\nfrom Rotational Labs\n\nthat does have the term in it.",
+        "This is some random concatenated RotationalLabs  that has the term in it",
+        "This is some random case insensitive ROTATIONAL that has the term in it",
+        "rotational",
+        "Rotational",
+        "This has a lowercase rotational in the middle of the text",
+        "Rotational is at the beginning of this text",
+        "Multiple Rotational terms appear Rotational in this Rotational text",
+    ],
+)
+def test_sensitive_search_leak(text):
+    sensitive = Sensitive(term='Rotational')
+    assert sensitive.search(text) is True
+
+
+@pytest.mark.parametrize("text", [
+    "This is some random text that does not have the term in it.",
+    "This is some random\nmultiline text\n\nthat does not have the term in it.",
+    "This is some random Rotatitext that almost has the term in it",
+])
+def test_sensitive_search_no_leak(text):
+    sensitive = Sensitive(term="Rotational")
+    assert sensitive.search(text) is False
+
+
+@pytest.mark.parametrize(
+    "expected,actual",
+    [
+        ("norisk", "norisk"),
+        ("norisk", "low"),
+        ("low", "norisk"),
+        ("low", "low"),
+        ("low", "moderate"),
+        ("moderate", "low"),
+        ("moderate", "moderate"),
+        ("moderate", "high"),
+        ("high", "moderate"),
+        ("high", "high"),
+        ("high", "critical"),
+        ("critical", "high"),
+        ("critical", "critical"),
+    ],
+)
+def test_cyberjudge_almost_true(expected, actual):
+    assert cyberjudge_almost(expected, actual) is True
+
+
+@pytest.mark.parametrize(
+    "expected,actual",
+    [
+        ("foo", "foo"),
+        ("foo", "high"),
+        ("high", "foo"),
+        ("norisk", "moderate"),
+        ("norisk", "high"),
+        ("norisk", "critical"),
+        ("low", "high"),
+        ("low", "critical"),
+        ("moderate", "norisk"),
+        ("moderate", "critical"),
+        ("high", "norisk"),
+        ("high", "low"),
+        ("critical", "norisk"),
+        ("critical", "low"),
+        ("critical", "moderate"),
+    ],
+)
+def test_cyberjudge_almost_false(expected, actual):
+    assert cyberjudge_almost(expected, actual) is False
