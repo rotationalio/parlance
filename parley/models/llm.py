@@ -282,6 +282,9 @@ class ModelEvaluation(BaseModel):
     def image(self):
         return self.model.image
 
+    def prompts(self):
+        return self.evaluation.prompts.filter(exclude=False)
+
     def responses(self):
         return Response.objects.filter(
             model=self.model, prompt__evaluation=self.evaluation
@@ -423,7 +426,7 @@ class Response(BaseModel):
 
     class Meta:
         db_table = "responses"
-        ordering = ("-created",)
+        ordering = ("created",)
         get_latest_by = "created"
         verbose_name = "response"
         verbose_name_plural = "responses"

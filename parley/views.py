@@ -31,7 +31,7 @@ from django.http import HttpResponse, Http404, HttpResponseNotAllowed
 
 from parley.exceptions import ParlanceUploadError
 from parley.forms import Uploader, CreateReviewForm
-from parley.models import LLM, Response, Evaluation, Prompt
+from parley.models import LLM, Response, Evaluation, Prompt, ReviewTask
 
 
 ##########################################################################
@@ -194,3 +194,15 @@ class CreateReviewTask(FormView):
 
     def get(self, *args, **kwargs):
         return HttpResponseNotAllowed(['POST'])
+
+
+class ReviewTaskDetail(DetailView):
+
+    model = ReviewTask
+    template_name = "reviews/detail.html"
+    context_object_name = "review"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_id"] = "review"
+        return context

@@ -33,9 +33,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
+from parley.views import ReviewTaskDetail
 from parley.views import LLMList, LLMDetail
-from parley.views import UploaderFormView, CreateReviewTask, ResponseDetail
 from parlance.views import Dashboard, AccountSettings, AccountProfile
+from parley.views import UploaderFormView, CreateReviewTask, ResponseDetail
 from parley.views import EvaluationList, EvaluationDetail, DownloadPrompts
 
 
@@ -47,16 +48,20 @@ urlpatterns = [
     # Application Pages
     path("", Dashboard.as_view(), name="dashboard"),
     path("upload/", UploaderFormView.as_view(), name="upload"),
+
     path("account/profile", AccountProfile.as_view(), name="account-profile"),
     path("account/settings", AccountSettings.as_view(), name="account-settings"),
+
     path("evaluations/", EvaluationList.as_view(), name="evaluations-list"),
     path("evaluations/<uuid:pk>", EvaluationDetail.as_view(), name="evaluation-detail"),
     path("evaluations/<uuid:pk>/download", DownloadPrompts.as_view(), name="evaluation-download"),
+    path("evaluations/create-review-task", CreateReviewTask.as_view(), name="create-review-task"),
+
+    path("reviews/<int:pk>", ReviewTaskDetail.as_view(), name="review-task"),
+
     path("models/", LLMList.as_view(), name="llms-list"),
     path("models/<uuid:pk>", LLMDetail.as_view(), name="llm-detail"),
     path("responses/<uuid:pk>", ResponseDetail.as_view(), name="response-detail"),
-
-    path("evaluations/create-review-task", CreateReviewTask.as_view(), name="create-review-task"),
 
     # Admin URLs
     path("admin/", admin.site.urls),

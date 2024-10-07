@@ -20,6 +20,7 @@ Implements models need to track user evaluations and reviews.
 from .base import TimestampedModel
 
 from django.db import models
+from django.urls import reverse
 
 
 ##########################################################################
@@ -36,7 +37,7 @@ class ReviewTask(TimestampedModel):
         help_text="The user that is conducting the evaluation",
     )
 
-    evaluation = models.ForeignKey(
+    model_evaluation = models.ForeignKey(
         "parley.ModelEvaluation",
         null=False,
         on_delete=models.CASCADE,
@@ -49,12 +50,12 @@ class ReviewTask(TimestampedModel):
     )
 
     started_on = models.DateTimeField(
-        null=True, default=None,
+        null=True, default=None, blank=True,
         help_text="The timestamp that the review was start on, null if not started"
     )
 
     completed_on = models.DateTimeField(
-        null=True, default=None,
+        null=True, default=None, blank=True,
         help_text="The timestamp that the review was completed, null if not completed",
     )
 
@@ -62,7 +63,18 @@ class ReviewTask(TimestampedModel):
         db_table = "review_tasks"
         ordering = ("-created",)
         get_latest_by = "created"
-        unique_together = ("user", "evaluation")
+        unique_together = ("user", "model_evaluation")
+
+    @property
+    def evaluation(self):
+        return self.model_evaluation.evaluation
+
+    @property
+    def model(self):
+        return self.model_evaluation.model
+
+    def prompts(self):
+        return self.model_evaluation.prompts()
 
     @property
     def is_started(self):
@@ -71,6 +83,20 @@ class ReviewTask(TimestampedModel):
     @property
     def is_completed(self):
         return self.completed_on is not None
+
+    @property
+    def percent_complete(self):
+        n_prompts = self.prompts().count()
+        if n_prompts == 0:
+            return 0
+        n_reviews = self.response_reviews.count()
+        return int((float(n_reviews) / float(n_prompts)) * 100)
+
+    def __str__(self):
+        return f"{self.evaluation.name} ({self.model.name})"
+
+    def get_absolute_url(self):
+        return reverse("review-task", args=(self.id,))
 
 
 class ResponseReview(TimestampedModel):
@@ -87,7 +113,7 @@ class ResponseReview(TimestampedModel):
         'parley.Response',
         null=False,
         on_delete=models.CASCADE,
-        related_name=("reviews"),
+        related_name="reviews",
     )
 
     output_correct = models.BooleanField(

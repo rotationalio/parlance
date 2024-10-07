@@ -82,9 +82,13 @@
 
                   {% get_review_task user model as review_task %}
                   {% if review_task %}
+                  {% if review_task.is_completed %}
+                  <span class="badge py-2 text-bg-success">Review Complete!</span>
+                  {% else %}
                   <a href="{{ review_task.get_absolute_url }}" class="btn btn-sm btn-white d-none d-xl-inline-block">
                     Continue Review
                   </a>
+                  {% endif %}
                   {% else %}
                   <form action="{% url 'create-review-task' %}" method="post" class="m-0 p-0 d-inline-block">
                     <input type="hidden" name="user" value="{{ user.id }}" />
@@ -96,6 +100,26 @@
                   </form>
                   {% endif %}
                 </div>
+                <div class="col-auto">
+
+                  <!-- Dropdown -->
+                  <div class="dropdown">
+                    <a href="#" class="dropdown-ellipses dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      <i class="fe fe-more-vertical"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end">
+                      {% if user.is_staff %}
+                      <a href="{% url 'admin:parley_modelevaluation_change' model.pk %}" class="dropdown-item">
+                        Edit in CMS
+                      </a>
+                      {% endif %}
+                      <a href="{% url 'llm-detail' model.model.pk %}" class="dropdown-item">
+                        View Model
+                      </a>
+                    </div>
+                  </div>
+
+              </div>
               </div>
             </li>
             {% empty %}

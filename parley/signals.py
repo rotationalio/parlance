@@ -17,10 +17,11 @@ Signals used by the parley app to maintain database correctness.
 ## Imports
 ##########################################################################
 
+from django.utils import timezone
 from django.dispatch import receiver
 from django.db.models.signals import post_save, post_delete
 
-from parley.models import Response, ModelEvaluation
+from parley.models import Response, ModelEvaluation, ResponseReview
 
 
 ##########################################################################
@@ -61,3 +62,49 @@ def model_evaluation_unlink(sender, instance, *args, **kwargs):
             ModelEvaluation.objects.get(**kwargs).delete()
         except ModelEvaluation.DoesNotExist:
             pass
+
+
+##########################################################################
+## Ensure ReviewTasks are
+##########################################################################
+
+@receiver(post_save, sender=ResponseReview, dispatch_uid="check_review_task_completion")
+def check_review_task_completion(sender, instance, created, *args, **kwargs):
+    task = instance.review
+    changed = False
+
+    if not task.started_on:
+        task.started_on = timezone.localtime()
+        changed = True
+
+    if not task.completed_on:
+        n_prompts = task.prompts().count()
+        if n_prompts == 0 or task.response_reviews.count() == n_prompts:
+            task.completed_on = timezone.localtime()
+            changed = True
+
+    if changed:
+        task.save()
+
+
+@receiver(post_delete, sender=ResponseReview, dispatch_uid="check_review_task_unfinished")
+def check_review_task_unfinished(sender, instance, *args, **kwargs):
+    task = instance.review
+    if task.completed_on:
+        n_prompts = task.prompts().count()
+        if n_prompts == 0:
+            return
+
+        n_reviews = task.response_reviews.count()
+        changed = False
+
+        if n_reviews < n_prompts:
+            task.completed_on = None
+            changed = True
+
+        if n_reviews == 0:
+            task.started_on = None
+            changed = True
+
+        if changed:
+            task.save()

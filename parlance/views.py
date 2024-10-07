@@ -19,7 +19,7 @@ Site level views and pages not associated with a specific app.
 
 from django.shortcuts import render
 from django.views.generic import TemplateView
-from parley.models import LLM, Evaluation, Prompt, Response
+from parley.models import LLM, Evaluation, Prompt, Response, ReviewTask
 
 
 ##########################################################################
@@ -41,7 +41,9 @@ class Dashboard(TemplateView):
         context["n_responses"] = Response.objects.count()
 
         # Get evaluations and models
-        context["evaluations"] = Evaluation.objects.filter(active=True)
+        context["evaluations"] = ReviewTask.objects.filter(
+            completed_on=None, user=self.request.user
+        )
         context["llms"] = LLM.objects.all()[:20]
 
         return context
