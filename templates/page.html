@@ -13,7 +13,7 @@
     <div class="header">
       <div class="container-fluid">
         <div class="header-body">
-          <div class="row align-items-end">
+          <div class="row align-items-end align-items-center">
             <div class="col">
               <!-- pretitle -->
               <h6 class="header-pretitle">
@@ -23,6 +23,8 @@
               <h1 class="header-title">
                 {% block page-title %}Title{% endblock %}
               </h1>
+
+              {% block page-header-extra %}{% endblock %}
             </div>
 
             <div class="col-auto">

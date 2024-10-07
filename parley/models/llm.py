@@ -21,8 +21,11 @@ import os
 import json
 
 from .base import BaseModel
+from .enums import OutputFormat
+
 from django.db import models
 from django.urls import reverse
+from django.templatetags.static import static
 
 from parley.validators import validate_semver
 
@@ -157,6 +160,11 @@ class LLM(BaseModel):
 
     def get_absolute_url(self):
         return reverse("llm-detail", args=(self.id,))
+
+    def get_cover_image(self):
+        if self.cover_image:
+            return self.cover_image.url
+        return static("img/model-cover.png")
 
 
 class ModelEvaluation(BaseModel):
@@ -441,24 +449,45 @@ class Response(BaseModel):
 
     def get_previous(self):
         try:
-            return self.get_previous_by_created()
+            qs = Response.objects.filter(
+                model=self.model,
+                prompt__evaluation=self.prompt.evaluation,
+                prompt__order__lt=self.prompt.order,
+            )
+            return qs.order_by("-prompt__order").first()
         except self.DoesNotExist:
             return None
 
     def get_next(self):
         try:
-            return self.get_next_by_created()
+            qs = Response.objects.filter(
+                model=self.model,
+                prompt__evaluation=self.prompt.evaluation,
+                prompt__order__gt=self.prompt.order,
+            )
+            return qs.order_by("prompt__order").first()
         except self.DoesNotExist:
             return None
 
     def get_absolute_url(self):
         return reverse("response-detail", args=(self.id,))
 
-    def validate_json(self):
+    def get_pretty_output(self):
+        # TODO: Handle other output format types
+        if self.valid_output_type:
+            if self.prompt.expected_output_type == OutputFormat.JSON:
+                data = self.load_json()
+                return json.dumps(data, indent=2)
+        return self.output
+
+    def load_json(self):
         output = self.output.strip()
         output = output.removeprefix("```json").removesuffix("```").strip()
+        return json.loads(output)
+
+    def check_valid_json(self):
         try:
-            json.loads(output)
+            self.load_json()
             return True
         except json.JSONDecodeError:
             return False

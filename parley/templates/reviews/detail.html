@@ -1,4 +1,235 @@
 {% extends 'page.html' %}
 
 {% block page-pretitle %}Reviews{% endblock %}
-{% block page-title %}{{ review }}{% endblock %}
+{% block page-title %}{{ review.evaluation.name }}{% endblock %}
+{% block page-controls %}
+  <a href="{% url 'admin:parley_reviewtask_change' review.id %}" class="btn btn-primary" title="Edit Review Task">
+    <span class="fe fe-edit"></span>
+  </a>
+{% endblock %}
+{% block page-header-extra %}
+  <p class="text-muted mt-2 mb-0">
+    <small>{{ review.evaluation.task }}</small>
+  </p>
+{% endblock %}
+
+{% block page %}
+<!-- model detail -->
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <div class="row align-items-center">
+          <div class="col-auto">
+            <div class="avatar avatar-lg avatar-4by3">
+
+              <img src="{{ review.model.get_cover_image }}" alt="model" class="avatar-img rounded">
+            </div>
+          </div>
+          <div class="col ms-n2">
+            <h4 class="mt-2 mb-2">
+              {{ review.model.name  }}
+            </h4>
+            <p class="small text-muted mb-1">
+              {{ review.model.description }}
+            </p>
+            {% with pcent=review.percent_complete %}
+            <div class="row align-items-center g-0">
+              <div class="col-auto">
+                <div class="small me-2">{{ pcent }}%</div>
+              </div>
+              <div class="col">
+                <div class="progress progress-sm">
+                  <div class="progress-bar" role="progressbar" style="width: {{ pcent }}%" aria-valuenow="{{ pcent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+              </div>
+            </div>
+            {% endwith %}
+          </div>
+          <div class="col-auto">
+            <span class="badge bg-primary-soft ms-auto ml-4">v{{ review.model.version }}</span>
+          </div>
+          <div class="col-auto">
+
+            <!-- Dropdown -->
+            <div class="dropdown">
+              <a href="#" class="dropdown-ellipses dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="fe fe-more-vertical"></i>
+              </a>
+              <div class="dropdown-menu dropdown-menu-end">
+                <a href="{% url 'llm-detail' review.model.id %}" class="dropdown-item">
+                  View Model
+                </a>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- model detail ends -->
+
+<!-- prompt detail -->
+<div class="row">
+  <div class="col-12">
+
+    {% with prompt=response.prompt %}
+    <div class="card" id="prompt">
+      <div class="card-header">
+        <h4 class="card-header-title">
+          Prompt {{ prompt.order }}
+        </h4>
+        <button class="btn btn-sm btn-secondary" data-bs-toggle="collapse" data-bs-target="#promptText">
+          Toggle
+        </button>
+      </div>
+      <div id="promptText" class="card-body collapse" data-bs-parent="#prompt">
+        <h5>System Prompt</h5>
+        <pre>{{ prompt.system }}</pre>
+
+        <h5>User Prompt</h5>
+        <pre>{{ prompt.prompt }}</pre>
+
+        {% if prompt.expected_output %}
+        <h5>Expected Output</h5>
+        <pre>{{ prompt.expected_output }}</pre>
+        {% endif %}
+      </div>
+      <div class="card-footer">
+        <span class="badge py-2 text-bg-primary">Expected format: {{ prompt.get_expected_output_type_display }}</span>
+        {% if prompt.expected_label %}
+        <span class="badge py-2 text-bg-light">Expected Label: {{ prompt.expected_label }}</span>
+        {% endif %}
+        {% if prompt.expected_output %}
+        <span class="badge py-2 text-bg-success">Toggle for Expected Output</span>
+        {% endif %}
+        {% if prompt.exclude %}
+        <span class="badge py-2 text-bg-danger">Excluded from Results</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endwith %}
+  </div>
+</div><!-- prompt detail ends -->
+
+<!-- model output -->
+<div class="row">
+  <div class="col-12">
+
+    <div class="card" id="response">
+      <div class="card-header">
+        <h4 class="card-header-title">
+          Model Response
+        </h4>
+        <button class="btn btn-sm btn-secondary" data-bs-toggle="collapse" data-bs-target="#responseText">
+          Toggle
+        </button>
+      </div>
+      <div id="responseText" class="card-body collapse show" data-bs-parent="#response">
+        <h5>Model Output</h5>
+        <pre>{{ response.get_pretty_output }}</pre>
+        {% if response.label or response.output_similarity %}
+        <h5>Automated Review</h5>
+        {% if response.label %}
+        <p class="fs-5"><strong>Extrated Label</strong>: {{ response.label }}<p>
+        {% endif %}
+        {% if response.output_similarity %}
+        <p class="fs-5"><strong>Output Similarity</strong>: {{ response.output_similarity }} by {{ response.prompt.evaluation.get_similarity_metric_display }} (t={{ response.prompt.evaluation.similarity_threshold }})<p>
+        {% endif %}
+        {% endif %}
+      </div>
+      <div class="card-footer">
+        {% if response.valid_output_type is None %}
+          <span class="badge bg-secondary ms-auto">Not Validated</span>
+        {% elif response.valid_output_type %}
+          <span class="badge bg-success-soft ms-auto">
+            <i class="fe fe-check"></i>
+            Valid {{ response.prompt.get_expected_output_type_display }}
+          </span>
+        {% else %}
+          <span class="badge bg-danger-soft ms-auto">
+            <i class="fe fe-x"></i>
+            Invalid {{ response.prompt.get_expected_output_type_display }}
+          </span>
+        {% endif %}
+
+        {% if response.leaks_sensitive is None %}
+          <span class="badge bg-secondary ms-auto">Not Scanned</span>
+        {% elif response.leaks_sensitive %}
+          <span class="badge bg-danger-soft ms-auto">
+            <i class="fe fe-unlock"></i>
+            Contains Sensitive Data
+          </span>
+        {% else %}
+          <span class="badge bg-success-soft ms-auto">
+            <i class="fe fe-lock"></i>
+            No Sensitive Leaks
+          </span>
+        {% endif %}
+
+        {% if response.is_similar is not None %}
+        {% if response.is_similar %}
+          <span class="badge bg-success-soft ms-auto">
+            <i class="fe fe-eye"></i>
+            Similar to Expected
+          </span>
+        {% else %}
+          <span class="badge bg-danger-soft ms-auto">
+            <i class="fe fe-eye-off"></i>
+            Not Similar to Expected
+          </span>
+        {% endif %}
+        {% endif %}
+
+        {% if response.label_correct is not None %}
+        {% if response.label_correct %}
+          <span class="badge bg-success-soft ms-auto">
+            <i class="fe fe-eye"></i>
+            Label Match
+          </span>
+        {% else %}
+          <span class="badge bg-danger-soft ms-auto">
+            <i class="fe fe-eye-off"></i>
+            Incorrect Label
+          </span>
+        {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div><!-- model output ends -->
+
+<!-- page controls -->
+<div class="row pb-4">
+  <div class="col-12">
+    <hr />
+    <div class="nav row align-items-center">
+      <div class="col-auto">
+
+        <!-- Button -->
+        {% with prev=response.get_previous %}
+        <a class="btn btn-lg btn-white{% if not prev %} disabled{% endif %}" {% if prev %}href="?response={{ prev.id }}"{% endif %}>
+          <span class="fe fe-chevrons-left"></span> Prev
+        </a>
+        {% endwith %}
+      </div>
+      <div class="col text-center">
+
+        <!-- Step -->
+        <h6 class="text-uppercase text-muted mb-0">{{ response.model.responses.count }} Responses</h6>
+
+      </div>
+      <div class="col-auto">
+
+        <!-- Button -->
+        {% with next=response.get_next %}
+        <a class="btn btn-lg btn-primary{% if not next %} disabled{% endif %}" {% if next %}href="?response={{ next.id }}"{% endif %}>
+          Next <span class="fe fe-chevrons-right"></span>
+        </a>
+        {% endwith %}
+      </div>
+    </div>
+  </div>
+</div><!-- page controls ends -->
+{% endblock %}

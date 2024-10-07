@@ -202,7 +202,26 @@ class ReviewTaskDetail(DetailView):
     template_name = "reviews/detail.html"
     context_object_name = "review"
 
+    def get_response_object(self, **kwargs):
+        # If the response is in the query string, fetch it.
+        query = self.request.GET.get("response", None)
+        if query:
+            try:
+                obj = Response.objects.get(pk=query)
+                if obj.model != self.object.model or obj.prompt.evaluation != self.object.evaluation:
+                    raise Http404
+            except Response.DoesNotExist:
+                raise Http404
+
+        # Otherwise get the latest response
+        obj = Response.objects.filter(
+            model=self.object.model,
+            prompt__evaluation=self.object.evaluation,
+        ).first()
+        return obj
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["page_id"] = "review"
+        context["response"] = self.get_response_object()
         return context

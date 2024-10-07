@@ -5,7 +5,7 @@
 {% block page-title %}{{ evaluation.name }}{% endblock %}
 {% block page-controls %}
   {% if user.is_staff %}
-  <a href="{% url 'admin:parley_evaluation_change' evaluation.pk %}" class="btn btn-primary" title="Download Prompts">
+  <a href="{% url 'admin:parley_evaluation_change' evaluation.pk %}" class="btn btn-primary" title="Edit Evaluation">
     <span class="fe fe-edit"></span>
   </a>
   {% endif %}
