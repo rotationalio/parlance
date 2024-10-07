@@ -42,6 +42,12 @@ class Sensitive(TimestampedModel):
         help_text="If the term is a regular expression to analyze the output on",
     )
 
+    is_name = models.BooleanField(
+        null=False,
+        default=False,
+        help_text="If the term is a proper name that may be extracted and fuzzy searched with NER",
+    )
+
     case_sensitive = models.BooleanField(
         null=False,
         default=False,
@@ -54,3 +60,6 @@ class Sensitive(TimestampedModel):
         get_latest_by = "created"
         verbose_name = "sensitive"
         verbose_name_plural = "sensitive"
+
+    def __str__(self):
+        return self.term

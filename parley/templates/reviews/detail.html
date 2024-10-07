@@ -132,7 +132,7 @@
         {% if response.label or response.output_similarity %}
         <h5>Automated Review</h5>
         {% if response.label %}
-        <p class="fs-5"><strong>Extrated Label</strong>: {{ response.label }}<p>
+        <p class="fs-5"><strong>Extracted Label</strong>: {{ response.label }}<p>
         {% endif %}
         {% if response.output_similarity %}
         <p class="fs-5"><strong>Output Similarity</strong>: {{ response.output_similarity }} by {{ response.prompt.evaluation.get_similarity_metric_display }} (t={{ response.prompt.evaluation.similarity_threshold }})<p>
