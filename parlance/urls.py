@@ -34,7 +34,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 from parley.views import LLMList, LLMDetail
-from parley.views import UploaderFormView, ResponseDetail
+from parley.views import UploaderFormView, CreateReviewTask, ResponseDetail
 from parlance.views import Dashboard, AccountSettings, AccountProfile
 from parley.views import EvaluationList, EvaluationDetail, DownloadPrompts
 
@@ -55,8 +55,12 @@ urlpatterns = [
     path("models/", LLMList.as_view(), name="llms-list"),
     path("models/<uuid:pk>", LLMDetail.as_view(), name="llm-detail"),
     path("responses/<uuid:pk>", ResponseDetail.as_view(), name="response-detail"),
+
+    path("evaluations/create-review-task", CreateReviewTask.as_view(), name="create-review-task"),
+
     # Admin URLs
     path("admin/", admin.site.urls),
+
     # Authentication URLs
     path("accounts/", include("django.contrib.auth.urls")),
 ]

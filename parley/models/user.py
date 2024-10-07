@@ -37,7 +37,7 @@ class ReviewTask(TimestampedModel):
     )
 
     evaluation = models.ForeignKey(
-        "parley.Evaluation",
+        "parley.ModelEvaluation",
         null=False,
         on_delete=models.CASCADE,
         related_name="review_tasks",

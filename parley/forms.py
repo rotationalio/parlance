@@ -23,8 +23,10 @@ import tempfile
 
 from django import forms
 from collections import defaultdict
+from django.contrib.auth.models import User
 from parley.exceptions import ParlanceUploadError
 from django.core.exceptions import ValidationError
+from parley.models import ModelEvaluation, ReviewTask
 from parley.models import LLM, Evaluation, Prompt, Response, Sensitive
 
 
@@ -175,3 +177,18 @@ class Uploader(forms.Form):
             raise ParlanceUploadError(
                 f"could not associate \"{row.get(key, '')}\" with existing {model.__name__} object"
             )
+
+
+class CreateReviewForm(forms.Form):
+
+    user = forms.IntegerField(required=True)
+    evaluation = forms.UUIDField(required=True)
+
+    def save(self):
+        try:
+            ReviewTask.objects.create(
+                user=User.objects.get(pk=self.cleaned_data["user"]),
+                evaluation=ModelEvaluation.objects.get(pk=self.cleaned_data["evaluation"]),
+            )
+        except (User.DoesNotExist, ModelEvaluation.DoesNotExist):
+            return

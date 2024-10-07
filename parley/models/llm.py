@@ -187,6 +187,11 @@ class ModelEvaluation(BaseModel):
         help_text="The evaluation associated with the model",
     )
 
+    reviewers = models.ManyToManyField(
+        "auth.User",
+        through="parley.ReviewTask",
+    )
+
     # Cache Info
     metrics_cached = models.BooleanField(
         default=False, editable=False,
@@ -281,6 +286,12 @@ class ModelEvaluation(BaseModel):
         return Response.objects.filter(
             model=self.model, prompt__evaluation=self.evaluation
         )
+
+    @property
+    def percent_complete(self):
+        return (
+            float(self.responses().count()) / float(self.evaluation.prompts.count())
+        ) * 100
 
     def __str__(self):
         return f"{self.evaluation.name} for {self.model.name}"

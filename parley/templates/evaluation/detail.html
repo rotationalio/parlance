@@ -1,4 +1,112 @@
 {% extends 'page.html' %}
+{% load parlance %}
 
 {% block page-pretitle %}Evaluations{% endblock %}
 {% block page-title %}{{ evaluation.name }}{% endblock %}
+{% block page-controls %}
+  {% if user.is_staff %}
+  <a href="{% url 'admin:parley_evaluation_change' evaluation.pk %}" class="btn btn-primary" title="Download Prompts">
+    <span class="fe fe-edit"></span>
+  </a>
+  {% endif %}
+  <a href="{% url 'evaluation-download' evaluation.pk %}" class="btn btn-secondary" title="Download Prompts">
+    <span class="fe fe-download"></span>
+  </a>
+{% endblock %}
+
+{% block page %}
+  <!-- evaluation information -->
+  <div class="row">
+    <div class="col-12">
+
+      <div class="card">
+        <div class="card-body">
+          {% if evaluation.task %}
+          <p class="lead">{{ evaluation.task }}</p>
+          {% endif %}
+          <div class="info-pills">
+            <span class="badge text-bg-primary py-2">{{ evaluation.prompts.count }} prompts</span>
+            <span class="badge text-bg-info py-2">{{ evaluation.get_similarity_metric_display }} (t={{ evaluation.similarity_threshold }})</span>
+            {% with n_models=evaluation.llms.count %}
+            <span class="badge py-2 {% if n_models == 0 %}text-bg-danger{% else %}text-bg-info{% endif %}">{{ n_models }} models</span>
+            {% endwith %}
+          </div>
+          {% if evaluation.description %}
+          <div class="description">
+          {{ evaluation.description|linebreaks }}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- model evaluations list -->
+  <div class="row">
+    <div class="col-12">
+
+      <div class="card">
+        <div class="card-header">
+          <h4 class="card-header-title">Models under Evaluation</h4>
+        </div>
+
+        <div class="card-body">
+          <ul class="list-group list-group-lg list-group-flush list my-n4">
+            {% for model in evaluation.model_evaluations.all %}
+            <li class="list-group-item">
+              <div class="row align-items-center">
+                <div class="col-auto">
+                  <!-- icon -->
+                  <a href="#!" class="avatar avatar-lg">
+                    <span class="avatar-title rounded bg-white text-secondary">
+                      <span class="fe fe-cpu"></span>
+                    </span>
+                  </a>
+                </div>
+                <div class="col ms-n2">
+                  <h4 class="mb-1 name">
+                    <a href="#!">{{ model.model.name }} <span class="badge text-bg-light">v{{ model.model.version }}</span></a>
+                  </h4>
+
+                  <p class="card-text small text-muted mb-1">
+                    {{ model.percent_complete }}% responses completed for evaluation
+                  </p>
+
+                </div>
+                <div class="col-auto">
+                  {% with n_reviewers=model.reviewers.count %}
+                  <span class="badge py-2 {% if n_reviewers == 0 %}text-bg-danger{% elif n_reviewers < 3 %}text-bg-warning{% else %}text-bg-info{% endif %}">{{ n_reviewers }} reviewers</span>
+                  {% endwith %}
+
+                  {% get_review_task user model as review_task %}
+                  {% if review_task %}
+                  <a href="{{ review_task.get_absolute_url }}" class="btn btn-sm btn-white d-none d-xl-inline-block">
+                    Continue Review
+                  </a>
+                  {% else %}
+                  <form action="{% url 'create-review-task' %}" method="post" class="m-0 p-0 d-inline-block">
+                    <input type="hidden" name="user" value="{{ user.id }}" />
+                    <input type="hidden" name="evaluation" value="{{ model.id }}" />
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-dark d-none d-xl-inline-block">
+                      Begin Review
+                    </button>
+                  </form>
+                  {% endif %}
+                </div>
+              </div>
+            </li>
+            {% empty %}
+            <li class="list-group-item">
+              <p>No Models Yet!</p>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- prompts list ends -->
+{% endblock %}
