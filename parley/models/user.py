@@ -106,7 +106,7 @@ class ResponseReview(TimestampedModel):
         'parley.Response',
         null=False,
         on_delete=models.CASCADE,
-        related_name=("reviews"),
+        related_name="reviews",
     )
 
     output_correct = models.BooleanField(
