@@ -210,6 +210,7 @@ class ReviewTaskDetail(DetailView):
                 obj = Response.objects.get(pk=query)
                 if obj.model != self.object.model or obj.prompt.evaluation != self.object.evaluation:
                     raise Http404
+                return obj
             except Response.DoesNotExist:
                 raise Http404
 
