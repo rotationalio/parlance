@@ -28,7 +28,7 @@
       <div class="card">
         <div class="card-header">
           <h4 class="card-header-title">
-            Active Evaluations
+            Pending Review Tasks
           </h4>
 
         </div>
@@ -39,7 +39,7 @@
               <div class="row align-items-center">
                 <div class="col-auto">
                   <!-- icon -->
-                  <a href="#!" class="avatar avatar-lg">
+                  <a href="{{ evaluation.get_absolute_url }}" class="avatar avatar-lg">
                     <span class="avatar-title rounded bg-white text-secondary">
                       <span class="fe fe-clipboard"></span>
                     </span>
@@ -49,7 +49,7 @@
 
                     <!-- Title -->
                     <h4 class="mb-1 name">
-                      <a href="#!">{{ evaluation.name }}</a>
+                      <a href="{{ evaluation.get_absolute_url }}">{{ evaluation }}</a>
                     </h4>
 
                     <!-- Text -->
@@ -57,17 +57,26 @@
                       {{ evaluation.task }}
                     </p>
 
-                    <!-- Time -->
-                    <p class="card-text small text-muted">
-                      {{ evaluation.prompts.count }} prompts
-                    </p>
+                    <!-- Progress -->
+                    {% with pcent=evaluation.percent_complete %}
+                    <div class="row align-items-center g-0">
+                      <div class="col-auto">
+                        <div class="small me-2">{{ pcent }}%</div>
+                      </div>
+                      <div class="col pe-5">
+                        <div class="progress progress-sm">
+                          <div class="progress-bar" role="progressbar" style="width: {{ pcent }}%" aria-valuenow="{{ pcent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                      </div>
+                    </div>
+                    {% endwith %}
 
                   </div>
                   <div class="col-auto">
 
                     <!-- Button -->
-                    <a href="#!" class="btn btn-sm btn-white d-none d-md-inline-block">
-                      Download
+                    <a href="{{ evaluation.get_absolute_url }}" class="btn btn-sm btn-white d-none d-md-inline-block">
+                      {% if evaluation.is_started %}Continue Review{% else %}Begin Review{% endif %}
                     </a>
 
                   </div>
@@ -79,14 +88,14 @@
                         <i class="fe fe-more-vertical"></i>
                       </a>
                       <div class="dropdown-menu dropdown-menu-end">
-                        <a href="#!" class="dropdown-item">
-                          Action
+                        <a href="{% url 'admin:parley_reviewtask_change' evaluation.pk %}" class="dropdown-item">
+                          Edit in CMS
                         </a>
-                        <a href="#!" class="dropdown-item">
-                          Another action
+                        <a href="{% url 'evaluation-detail' evaluation.evaluation.evaluation.pk %}" class="dropdown-item">
+                          View Evaluation
                         </a>
-                        <a href="#!" class="dropdown-item">
-                          Something else here
+                        <a href="{% url 'llm-detail' evaluation.evaluation.model.pk %}" class="dropdown-item">
+                          View Model
                         </a>
                       </div>
                     </div>
@@ -96,7 +105,20 @@
             </li>
             {% empty %}
             <li class="list-group-item">
-              <p>No Active Review Tasks</p>
+              <p>
+                You have no pending review tasks!
+              </p>
+              <p>
+                To begin a review, go to the
+                <a href="{% url 'evaluations-list' %}">Evaluations</a> page, and select
+                an evaluation that has at least one model associated with it. When you
+                reach the evaluation detail page, click on the "Begin Review" button to
+                start an evaluation.
+              </p>
+              <p>
+                If all models have been marked as reviewed &mdash; congratulations, you
+                are an expert reviewer! Let's train a new model and get evaluating!
+              </p>
             </li>
             {% endfor %}
           </ul>

@@ -20,6 +20,7 @@ Implements models need to track user evaluations and reviews.
 from .base import TimestampedModel
 
 from django.db import models
+from django.urls import reverse
 
 
 ##########################################################################
@@ -49,12 +50,12 @@ class ReviewTask(TimestampedModel):
     )
 
     started_on = models.DateTimeField(
-        null=True, default=None,
+        null=True, default=None, blank=True,
         help_text="The timestamp that the review was start on, null if not started"
     )
 
     completed_on = models.DateTimeField(
-        null=True, default=None,
+        null=True, default=None, blank=True,
         help_text="The timestamp that the review was completed, null if not completed",
     )
 
@@ -65,12 +66,30 @@ class ReviewTask(TimestampedModel):
         unique_together = ("user", "evaluation")
 
     @property
+    def task(self):
+        return self.evaluation.evaluation.task
+
+    @property
     def is_started(self):
         return self.started_on is not None
 
     @property
     def is_completed(self):
         return self.completed_on is not None
+
+    @property
+    def percent_complete(self):
+        n_prompts = self.evaluation.prompts().count()
+        if n_prompts == 0:
+            return 0
+        n_reviews = self.response_reviews.count()
+        return int((float(n_reviews) / float(n_prompts)) * 100)
+
+    def __str__(self):
+        return f"{self.evaluation.evaluation.name} ({self.evaluation.model.name})"
+
+    def get_absolute_url(self):
+        return reverse("review-task", args=(self.id,))
 
 
 class ResponseReview(TimestampedModel):
