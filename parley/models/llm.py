@@ -572,4 +572,4 @@ class ModelEvaluation(BaseModel):
         if total == 0:
             return 0.0
 
-        return (float(field) / float(total))*100
+        return round((float(field) / float(total))*100, 2)

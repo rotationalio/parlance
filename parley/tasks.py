@@ -62,13 +62,20 @@ def cache_metrics(me: ModelEvaluation):
     counts = defaultdict(lambda: defaultdict(int))
     for response in me.responses():
         for field in METRIC_FIELDS:
-            counts[field][getattr(response, field)] += 1
+            metric = getattr(response, field)
+            if metric is not None:
+                counts[field][metric] += 1
 
     # Assign the counts to their metrics
     for field, (pos, neg) in METRICS_MAP.items():
+        if field not in counts:
+            setattr(me, pos, None)
+            setattr(me, neg, None)
+            continue
+
         count = counts[field]
-        setattr(me, pos, count.get(True, None))
-        setattr(me, neg, count.get(False, None))
+        setattr(me, pos, count.get(True, 0))
+        setattr(me, neg, count.get(False, 0))
 
     me.metrics_cached = True
     me.metrics_last_cached_on = timezone.localtime()
