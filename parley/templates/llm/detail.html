@@ -9,6 +9,10 @@
 {% endblock %}
 
 {% block page %}
+<div class="chart">
+  <canvas id="metricsChart" class="chart-canvas"></canvas>
+</div>
+
 <!-- simple metrics table -->
 <div class="row">
   <div class="col-12">
@@ -90,4 +94,27 @@
     </div>
   </div>
 </div><!-- metrics table ends -->
+{% endblock %}
+
+{% block javascripts %}
+  {{ block.super }}
+  <script>
+    new Chart('metricsChart', {
+      type: 'bar',
+      options: {
+        barThickness: 24,
+      },
+      data: {
+        labels: {{ chart.labels|safe }},
+        datasets: [{
+          label: 'Positive',
+          data: {{ chart.positive|safe }}
+        }, {
+          label: 'Negative',
+          data: {{ chart.negative|safe }},
+          backgroundColor: '#d2ddec',
+        }]
+      }
+    });
+  </script>
 {% endblock %}
