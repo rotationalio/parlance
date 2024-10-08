@@ -71,7 +71,7 @@ class Command(BaseCommand):
 
         # Lookup the model evaluations specified by the user in the database
         model_evaluations = self.get_queryset(**opts)
-        n_model_evals = model_evaluations.count()
+        n_model_evals = model_evaluations.count() if model_evaluations is not None else 0
         if n_model_evals == 0:
             raise CommandError("no model evaluations found for criteria")
 
