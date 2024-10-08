@@ -17,8 +17,10 @@ Handling of sensitive data and validation.
 ## Imports
 ##########################################################################
 
-from .base import TimestampedModel
+import re
+
 from django.db import models
+from .base import TimestampedModel
 
 
 class Sensitive(TimestampedModel):
@@ -60,6 +62,24 @@ class Sensitive(TimestampedModel):
         get_latest_by = "created"
         verbose_name = "sensitive"
         verbose_name_plural = "sensitive"
+
+    def search(self, text: str) -> bool:
+        if self.is_regex:
+            args = [self.term, text]
+            if not self.case_sensitive:
+                args.append(re.IGNORECASE)
+
+            if re.search(*args):
+                return True
+            return False
+
+        if not self.case_sensitive:
+            text = text.casefold()
+            term = self.term.casefold()
+        else:
+            term = self.term
+
+        return text.find(term) > -1
 
     def __str__(self):
         return self.term

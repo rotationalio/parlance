@@ -7,3 +7,87 @@
     <span class="fe fe-edit"></span>
   </a>
 {% endblock %}
+
+{% block page %}
+<!-- simple metrics table -->
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h4 class="card-header-title">Metrics</h4>
+      </div>
+
+      <div class="table-responsive mb-0">
+        <table class="table table-sm table-nowrap card-table">
+          <thead>
+            <tr>
+              <th>Evaluation</th>
+              <th>Metric</th>
+              <th class="text-center">Positive</th>
+              <th class="text-center">Negative</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for eval in llm.model_evaluations.all %}
+            {% if eval.metrics_cached %}
+            {% if eval.valid_output_processed %}
+            <tr>
+              <td>{{ eval.evaluation.name }}</td>
+              <td>Valid Output</td>
+              <td class="text-center">{{ eval.n_valid_output_type }} ({{ eval.percent_valid_output_type }}%)</td>
+              <td class="text-center">{{ eval.n_invalid_output_type }} ({{ eval.percent_invalid_output_type }}%)</td>
+            </tr>
+            {% endif %}
+            {% if eval.sensitive_processed %}
+            <tr>
+              <td>{{ eval.evaluation.name }}</td>
+              <td>Leaks Sensitive</td>
+              <td class="text-center">{{ eval.n_leaks_sensitive }} ({{ eval.percent_leaks_sensitive }}%)</td>
+              <td class="text-center">{{ eval.n_no_sensitive_leaks }} ({{ eval.percent_no_sensitive_leaks }}%)</td>
+            </tr>
+            {% endif %}
+            {% if eval.similarity_processed %}
+            <tr>
+              <td>{{ eval.evaluation.name }}</td>
+              <td>Similarity to Expected</td>
+              <td class="text-center">{{ eval.n_similar }} ({{ eval.percent_similar }}%)</td>
+              <td class="text-center">{{ eval.n_not_similar }} ({{ eval.percent_not_similar }}%)</td>
+            </tr>
+            {% endif %}
+            {% if eval.labels_processed %}
+            <tr>
+              <td>{{ eval.evaluation.name }}</td>
+              <td>Labeled Correctly</td>
+              <td class="text-center">{{ eval.n_labeled_correctly }} ({{ eval.percent_labeled_correctly }}%)</td>
+              <td class="text-center">{{ eval.n_labeled_incorrectly }} ({{ eval.percent_labeled_incorrectly }}%)</td>
+            </tr>
+            {% endif %}
+            {% if eval.confabulations_processed %}
+            <tr>
+              <td>{{ eval.evaluation.name }}</td>
+              <td>Confabulations</td>
+              <td class="text-center">{{ eval.n_confabulations }} ({{ eval.percent_confabulations }}%)</td>
+              <td class="text-center">{{ eval.n_not_confabulation }} ({{ eval.percent_not_confabulation }}%)</td>
+            </tr>
+            {% endif %}
+            {% if eval.readability_processed %}
+            <tr>
+              <td>{{ eval.evaluation.name }}</td>
+              <td>Readable Output</td>
+              <td class="text-center">{{ eval.n_readable }} ({{ eval.percent_readable }}%)</td>
+              <td class="text-center">{{ eval.n_not_readable }} ({{ eval.percent_not_readable }}%)</td>
+            </tr>
+            {% endif %}
+            {% endif %}
+            {% empty %}
+            <tr>
+              <td colspan="4">No Evaluations Run</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div><!-- metrics table ends -->
+{% endblock %}
