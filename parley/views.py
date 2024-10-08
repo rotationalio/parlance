@@ -19,6 +19,8 @@ Parley views and controllers.
 
 import json
 
+from collections import defaultdict
+
 from django.views import View
 from django.db import transaction
 from django.contrib import messages
@@ -32,6 +34,32 @@ from django.http import HttpResponse, Http404, HttpResponseNotAllowed
 from parley.exceptions import ParlanceUploadError
 from parley.forms import Uploader, CreateReviewForm
 from parley.models import LLM, Response, Evaluation, Prompt, ReviewTask
+
+
+CHART_METRICS = {
+    "Similarity": ("similarity_processed", "n_is_similar", "n_not_similar"),
+    "Correct Label": (
+        "labels_processed",
+        "n_labeled_correctly",
+        "n_labeled_incorrectly",
+    ),
+    "Valid Output": (
+        "valid_output_processed",
+        "n_valid_output_type",
+        "n_invalid_output_type",
+    ),
+    "Leaks Sensitive": (
+        "sensitive_processed",
+        "n_leaks_sensitive",
+        "n_no_sensitive_leaks",
+    ),
+    "Confabulations": (
+        "confabulations_processed",
+        "n_confabulations",
+        "n_not_confabulation",
+    ),
+    "Is Readable": ("readability_processed", "n_readable", "n_not_readable"),
+}
 
 
 ##########################################################################
@@ -95,9 +123,33 @@ class EvaluationDetail(DetailView):
     template_name = "evaluation/detail.html"
     context_object_name = "evaluation"
 
+    def get_chart_data(self):
+        # Create chart data
+        chart = {"labels": [], "datasets": []}
+
+        for me in self.object.model_evaluations.all():
+            chart["labels"].append(me.model.name)
+            for metric, (has_metric, pos, _) in CHART_METRICS.items():
+                # TODO: this could produce lopsided graphs
+                if not getattr(me, has_metric):
+                    continue
+
+                for ds in chart["datasets"]:
+                    if ds["label"] == metric:
+                        break
+                else:
+                    ds = {"label": metric, "data": []}
+                    chart["datasets"].append(ds)
+
+                ds["data"].append(getattr(me, "percent_"+pos.removeprefix("n_"), 0))
+
+        # Convert to chart data
+        return {key: json.dumps(val) for key, val in chart.items()}
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["page_id"] = "evaluation"
+        context["chart"] = self.get_chart_data()
         return context
 
 
@@ -140,7 +192,7 @@ class LLMList(ListView):
 
     model = LLM
     template_name = "llm/list.html"
-    context_object_name = "llm"
+    context_object_name = "llms"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -154,9 +206,35 @@ class LLMDetail(DetailView):
     template_name = "llm/detail.html"
     context_object_name = "llm"
 
+    def get_chart_data(self):
+        # Perform Aggregation
+        counts = defaultdict(lambda: defaultdict(int))
+        for me in self.object.model_evaluations.all():
+            for metric, (has_metric, pos, neg) in CHART_METRICS.items():
+                if getattr(me, has_metric):
+                    counts[metric]["pos"] += getattr(me, pos)
+                    counts[metric]["neg"] += getattr(me, neg)
+
+        # Convert to chart data
+        data = {
+            "labels": [],
+            "positive": [],
+            "negative": []
+        }
+
+        for metric, count in counts.items():
+            data["labels"].append(metric)
+            data["positive"].append(count["pos"])
+            data["negative"].append(count["neg"])
+
+        return {
+            key: json.dumps(val) for key, val in data.items()
+        }
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["page_id"] = "model"
+        context["chart"] = self.get_chart_data()
         return context
 
 

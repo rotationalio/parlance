@@ -2,3 +2,13 @@
 
 {% block page-pretitle %}Overview{% endblock %}
 {% block page-title %}Model Under Evaluation{% endblock %}
+
+{% block page %}
+  <ul>
+  {% for llm in llms %}
+    <li>
+      <a href="{{ llm.get_absolute_url }}">{{ llm.name }}</a>
+    </li>
+  {% endfor %}
+  </ul>
+{% endblock %}

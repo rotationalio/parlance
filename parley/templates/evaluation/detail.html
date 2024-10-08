@@ -40,10 +40,10 @@
       </div>
 
     </div>
-  </div>
+  </div><!-- evaluation information ends -->
 
 
-  <!-- model evaluations list -->
+  <!-- model info list -->
   <div class="row">
     <div class="col-12">
 
@@ -67,7 +67,7 @@
                 </div>
                 <div class="col ms-n2">
                   <h4 class="mb-1 name">
-                    <a href="#!">{{ model.model.name }} <span class="badge text-bg-light">v{{ model.model.version }}</span></a>
+                    <a href="{{ model.model.get_absolute_url }}">{{ model.model.name }} <span class="badge text-bg-light">v{{ model.model.version }}</span></a>
                   </h4>
 
                   <p class="card-text small text-muted mb-1">
@@ -132,5 +132,113 @@
       </div>
 
     </div>
-  </div><!-- prompts list ends -->
+  </div><!-- model info list ends -->
+  <!-- model evaluation metrics -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="card-header-title">Metrics</h4>
+        </div>
+        <div class="chart">
+          <canvas id="metricsChart" class="chart-canvas"></canvas>
+        </div>
+        <div class="table-responsive mb-0">
+          <table class="table table-sm table-nowrap card-table">
+            <thead>
+              <tr>
+                <th>Evaluation</th>
+                <th>Metric</th>
+                <th class="text-center">Positive</th>
+                <th class="text-center">Negative</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for eval in evaluation.model_evaluations.all %}
+              {% if eval.metrics_cached %}
+              {% if eval.valid_output_processed %}
+              <tr>
+                <td>{{ eval.model.name }}</td>
+                <td>Valid Output</td>
+                <td class="text-center">{{ eval.n_valid_output_type }} ({{ eval.percent_valid_output_type }}%)</td>
+                <td class="text-center">{{ eval.n_invalid_output_type }} ({{ eval.percent_invalid_output_type }}%)</td>
+              </tr>
+              {% endif %}
+              {% if eval.sensitive_processed %}
+              <tr>
+                <td>{{ eval.model.name }}</td>
+                <td>Leaks Sensitive</td>
+                <td class="text-center">{{ eval.n_leaks_sensitive }} ({{ eval.percent_leaks_sensitive }}%)</td>
+                <td class="text-center">{{ eval.n_no_sensitive_leaks }} ({{ eval.percent_no_sensitive_leaks }}%)</td>
+              </tr>
+              {% endif %}
+              {% if eval.similarity_processed %}
+              <tr>
+                <td>{{ eval.model.name }}</td>
+                <td>Similarity to Expected</td>
+                <td class="text-center">{{ eval.n_similar }} ({{ eval.percent_similar }}%)</td>
+                <td class="text-center">{{ eval.n_not_similar }} ({{ eval.percent_not_similar }}%)</td>
+              </tr>
+              {% endif %}
+              {% if eval.labels_processed %}
+              <tr>
+                <td>{{ eval.model.name }}</td>
+                <td>Labeled Correctly</td>
+                <td class="text-center">{{ eval.n_labeled_correctly }} ({{ eval.percent_labeled_correctly }}%)</td>
+                <td class="text-center">{{ eval.n_labeled_incorrectly }} ({{ eval.percent_labeled_incorrectly }}%)</td>
+              </tr>
+              {% endif %}
+              {% if eval.confabulations_processed %}
+              <tr>
+                <td>{{ eval.model.name }}</td>
+                <td>Confabulations</td>
+                <td class="text-center">{{ eval.n_confabulations }} ({{ eval.percent_confabulations }}%)</td>
+                <td class="text-center">{{ eval.n_not_confabulation }} ({{ eval.percent_not_confabulation }}%)</td>
+              </tr>
+              {% endif %}
+              {% if eval.readability_processed %}
+              <tr>
+                <td>{{ eval.model.name }}</td>
+                <td>Readable Output</td>
+                <td class="text-center">{{ eval.n_readable }} ({{ eval.percent_readable }}%)</td>
+                <td class="text-center">{{ eval.n_not_readable }} ({{ eval.percent_not_readable }}%)</td>
+              </tr>
+              {% endif %}
+              {% endif %}
+              {% empty %}
+              <tr>
+                <td colspan="4">No Evaluations Run</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div><!-- model evaluation metrics ends -->
+{% endblock %}
+
+{% block javascripts %}
+  {{ block.super }}
+  <script>
+    new Chart('metricsChart', {
+      type: 'bar',
+      options: {
+        barThickness: 24,
+        scales: {
+          y: {
+            ticks: {
+              callback: function(value) {
+                return value + '%';
+              }
+            }
+          }
+        }
+      },
+      data: {
+        labels: {{ chart.labels|safe }},
+        datasets: {{ chart.datasets|safe }}
+      }
+    });
+  </script>
 {% endblock %}
