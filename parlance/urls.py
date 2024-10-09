@@ -35,9 +35,10 @@ from django.urls import path, include
 
 from parley.views import ReviewTaskDetail
 from parley.views import LLMList, LLMDetail
+from parley.views import EvaluationList, EvaluationDetail
+from parley.views import DownloadPrompts, DownloadAnalytics
 from parlance.views import Dashboard, AccountSettings, AccountProfile
 from parley.views import UploaderFormView, CreateReviewTask, ResponseDetail
-from parley.views import EvaluationList, EvaluationDetail, DownloadPrompts
 
 
 ##########################################################################
@@ -55,6 +56,7 @@ urlpatterns = [
     path("evaluations/", EvaluationList.as_view(), name="evaluations-list"),
     path("evaluations/<uuid:pk>", EvaluationDetail.as_view(), name="evaluation-detail"),
     path("evaluations/<uuid:pk>/download", DownloadPrompts.as_view(), name="evaluation-download"),
+    path("evaluations/<uuid:pk>/analytics", DownloadAnalytics.as_view(), name="evaluation-analytics"),
     path("evaluations/create-review-task", CreateReviewTask.as_view(), name="create-review-task"),
 
     path("reviews/<int:pk>", ReviewTaskDetail.as_view(), name="review-task"),
