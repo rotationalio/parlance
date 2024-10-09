@@ -17,6 +17,7 @@ Parley views and controllers.
 ## Imports
 ##########################################################################
 
+import csv
 import json
 
 from collections import defaultdict
@@ -25,6 +26,7 @@ from django.views import View
 from django.db import transaction
 from django.contrib import messages
 from django.urls import reverse_lazy
+from django.utils.text import slugify
 from django.utils.safestring import mark_safe
 from django.views.generic.edit import FormView
 from django.views.generic import DetailView, ListView
@@ -180,6 +182,44 @@ class DownloadPrompts(View):
             }
 
             reply.write(json.dumps(data) + "\n")
+
+        return reply
+
+
+class DownloadAnalytics(View):
+
+    def get(self, request, pk=None):
+        if pk is None or not Evaluation.objects.filter(pk=pk).exists():
+            raise Http404("evaluation not found")
+
+        evaluation = Evaluation.objects.get(pk=pk)
+        filename = slugify(f"{evaluation.name}") + ".csv"
+
+        reply = HttpResponse(
+            content_type="text/csv",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+        fieldnames = ["id", "prompt", "expected"]
+        models = [(llm.id, llm.name, llm.version) for llm in evaluation.llms.all()]
+        for _, name, version in models:
+            fieldnames.append(name + "-" + version)
+
+        prompts = Prompt.objects.filter(evaluation__id=pk, exclude=False)
+        writer = csv.DictWriter(reply, fieldnames=fieldnames)
+        writer.writeheader()
+
+        for prompt in prompts:
+            values = [prompt.id, str(prompt), prompt.expected_label]
+            for id, _, _ in models:
+                response = Response.objects.filter(model__id=id, prompt=prompt).first()
+                if response:
+                    values.append(response.label)
+                else:
+                    values.append(None)
+
+            writer.writerow(dict(zip(fieldnames, values)))
+
         return reply
 
 

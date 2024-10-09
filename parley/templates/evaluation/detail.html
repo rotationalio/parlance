@@ -9,6 +9,9 @@
     <span class="fe fe-edit"></span>
   </a>
   {% endif %}
+  <a href="{% url 'evaluation-analytics' evaluation.pk %}" class="btn btn-info" title="Download CSV for Analytics">
+    <span class="fe fe-download-cloud"></span>
+  </a>
   <a href="{% url 'evaluation-download' evaluation.pk %}" class="btn btn-secondary" title="Download Prompts">
     <span class="fe fe-download"></span>
   </a>
