@@ -34,13 +34,19 @@ from sentry_sdk.integrations.django import DjangoIntegration
 DEBUG = False
 
 ## Hosts
-ALLOWED_HOSTS = [
-    "parlance.rotational.app",
-]
+ALLOWED_HOSTS = environ_setting(
+    "ALLOWED_HOSTS",
+    default=[
+        "parlance.rotational.app",
+    ],
+)
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://parlance.rotational.app",
-]
+CSRF_TRUSTED_ORIGINS = environ_setting(
+    "CSRF_TRUSTED_ORIGINS",
+    default=[
+        "https://parlance.rotational.app",
+    ],
+)
 
 ## SSL is terminated at Traefik so all requests will be http in the k8s cluster.
 SECURE_SSL_REDIRECT = False
@@ -65,15 +71,12 @@ MEDIA_ROOT = environ_setting("MEDIA_ROOT", default=PROJECT / "storage" / "upload
 sentry_sdk.init(
     dsn=environ_setting("SENTRY_DSN"),
     integrations=[DjangoIntegration()],
-
     # Get release from Heroku environment or specify develop release
     release=get_sentry_release(),
     environment="production",
-
     # If you wish to associate users to errors (assuming you are using
     # django.contrib.auth) you may enable sending PII data.
     send_default_pii=True,
-
     # Set a uniform sample rate
     traces_sample_rate=0.5,
 )
