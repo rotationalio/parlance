@@ -34,19 +34,11 @@ from sentry_sdk.integrations.django import DjangoIntegration
 DEBUG = False
 
 ## Hosts
-ALLOWED_HOSTS = environ_setting(
-    "ALLOWED_HOSTS",
-    default=[
-        "parlance.rotational.app",
-    ],
-)
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "parlance.rotational.app").split(",")
 
-CSRF_TRUSTED_ORIGINS = environ_setting(
-    "CSRF_TRUSTED_ORIGINS",
-    default=[
-        "https://parlance.rotational.app",
-    ],
-)
+CSRF_TRUSTED_ORIGINS = os.environ.get(
+    "CSRF_TRUSTED_ORIGINS", "https://parlance.rotational.app"
+).split(",")
 
 ## SSL is terminated at Traefik so all requests will be http in the k8s cluster.
 SECURE_SSL_REDIRECT = False
