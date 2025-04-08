@@ -17,6 +17,7 @@ Configuration for the production environment.
 ## Imports
 ##########################################################################
 
+import os
 import sentry_sdk
 
 from .base import *  # noqa
