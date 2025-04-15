@@ -180,7 +180,7 @@ class DownloadPrompts(View):
                 "notes": prompt.notes,
                 "expected_output_type": prompt.expected_output_type,
                 "expected_output": prompt.expected_output,
-                "expected_labe": prompt.expected_label,
+                "expected_label": prompt.expected_label,
             }
 
             reply.write(json.dumps(data) + "\n")
