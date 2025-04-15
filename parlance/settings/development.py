@@ -21,6 +21,7 @@ import sentry_sdk
 
 from .base import *  # noqa
 from .base import PROJECT, environ_setting
+from .base import INSTALLED_APPS, MIDDLEWARE
 
 from ..version import get_sentry_release
 from sentry_sdk.integrations.django import DjangoIntegration
