@@ -24,7 +24,6 @@ from collections import defaultdict
 
 from django.views import View
 from django.db import transaction
-from django.shortcuts import render
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.utils.text import slugify
