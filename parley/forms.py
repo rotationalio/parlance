@@ -26,13 +26,14 @@ from collections import defaultdict
 from django.contrib.auth.models import User
 from parley.exceptions import ParlanceUploadError
 from django.core.exceptions import ValidationError
-from parley.models import ModelEvaluation, ReviewTask
+from parley.models import ModelEvaluation, ReviewTask, ResponseReview
 from parley.models import LLM, Evaluation, Prompt, Response, Sensitive
 
 
 ##########################################################################
 ## Fields
 ##########################################################################
+
 
 class MultipleFileInput(forms.ClearableFileInput):
 
@@ -58,6 +59,7 @@ class MultipleFileField(forms.FileField):
 ## Helpers
 ##########################################################################
 
+
 class UploaderCounts(object):
 
     def __init__(self):
@@ -74,7 +76,7 @@ class UploaderCounts(object):
         self.counts[fname][otype]["created"] += 1
 
     def updated(self, fname, otype):
-        self.counts[fname][otype]['updated'] += 1
+        self.counts[fname][otype]["updated"] += 1
 
     def html(self):
         lines = [
@@ -88,10 +90,14 @@ class UploaderCounts(object):
                 lines.append("<hr />")
             row += 1
 
-            lines.append(f'<p class="mb-1"><code>{fname}</code> results:</p>\n<ul class="my-0">')
+            lines.append(
+                f'<p class="mb-1"><code>{fname}</code> results:</p>\n<ul class="my-0">'
+            )
             for otype, c in ocounts.items():
-                lines.append(f'<li><code>{otype}</code>: {c["created"]} created, {c["updated"]} updated')
-            lines.append('</ul>')
+                lines.append(
+                    f'<li><code>{otype}</code>: {c["created"]} created, {c["updated"]} updated'
+                )
+            lines.append("</ul>")
 
         return "\n".join(lines)
 
@@ -99,6 +105,7 @@ class UploaderCounts(object):
 ##########################################################################
 ## Forms
 ##########################################################################
+
 
 class Uploader(forms.Form):
 
@@ -127,18 +134,16 @@ class Uploader(forms.Form):
 
         # Read the temporary file and handle contents
         for r, row in self.read_jsonlines(path):
-            if 'type' not in row:
-                raise ParlanceUploadError(
-                    f"missing type field on line {r} of {f.name}"
-                )
+            if "type" not in row:
+                raise ParlanceUploadError(f"missing type field on line {r} of {f.name}")
 
             rtype = {
-                'llm': LLM,
-                'evaluation': Evaluation,
-                'prompt': Prompt,
-                'response': Response,
-                'sensitive': Sensitive,
-            }.get(row.pop('type').strip().lower(), None)
+                "llm": LLM,
+                "evaluation": Evaluation,
+                "prompt": Prompt,
+                "response": Response,
+                "sensitive": Sensitive,
+            }.get(row.pop("type").strip().lower(), None)
 
             if rtype is None:
                 raise ParlanceUploadError(
@@ -147,25 +152,25 @@ class Uploader(forms.Form):
 
             # Handle Foreign Keys
             if rtype == Prompt:
-                self.link_reference(row, 'evaluation', Evaluation)
+                self.link_reference(row, "evaluation", Evaluation)
             elif rtype == Response:
-                self.link_reference(row, 'model', LLM)
-                self.link_reference(row, 'prompt', Prompt)
+                self.link_reference(row, "model", LLM)
+                self.link_reference(row, "prompt", Prompt)
 
             counts.increment(f.name, *rtype.objects.get_or_create(**row))
 
     def read_jsonlines(self, path):
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             for i, line in enumerate(f.readlines()):
                 try:
-                    yield i+1, json.loads(line)
+                    yield i + 1, json.loads(line)
                 except json.JSONDecodeError:
                     fname = os.path.basename(path)
                     raise ParlanceUploadError(f"invalid json on line {i+1} of {fname}")
 
     def write_temporary_file(self, td, f):
         path = os.path.join(td, f.name)
-        with open(path, 'wb') as fh:
+        with open(path, "wb") as fh:
             for chunk in f.chunks():
                 fh.write(chunk)
         return path
@@ -187,12 +192,50 @@ class CreateReviewForm(forms.Form):
     def save(self):
         try:
             ReviewTask.objects.create(
-                user=User.objects.get(
-                    pk=self.cleaned_data["user"]
-                ),
+                user=User.objects.get(pk=self.cleaned_data["user"]),
                 model_evaluation=ModelEvaluation.objects.get(
                     pk=self.cleaned_data["evaluation"]
                 ),
             )
         except (User.DoesNotExist, ModelEvaluation.DoesNotExist):
             return
+
+
+class UpdateResponseReviewForm(forms.ModelForm):
+    class Meta:
+        model = ResponseReview
+        fields = ["is_readable", "is_confabulation", "review", "response"]
+        widgets = {
+            "review": forms.HiddenInput(),
+            "response": forms.HiddenInput(),
+        }
+
+    def is_complete(self):
+        if not hasattr(self, "cleaned_data"):
+            if self.is_bound:
+                self.is_valid()
+            else:
+                if self.instance and self.instance.pk:
+                    return (
+                        self.instance.is_readable is not None
+                        and self.instance.is_confabulation is not None
+                    )
+                return False
+
+        return (
+            self.cleaned_data.get("is_readable") is not None
+            and self.cleaned_data.get("is_confabulation") is not None
+        )
+
+    def save(self):
+        response_review, _ = ResponseReview.objects.get_or_create(
+            review=self.cleaned_data["review"],
+            response=self.cleaned_data["response"],
+        )
+
+        for key, value in self.cleaned_data.items():
+            if key not in ["review", "response"]:
+                setattr(response_review, key, value)
+
+        response_review.save()
+        return response_review

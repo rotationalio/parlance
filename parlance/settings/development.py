@@ -47,6 +47,14 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 EMAIL_FILE_PATH = PROJECT / "tmp" / "outbox"
 
+# Debugging tools
+INSTALLED_APPS += [
+    "django_browser_reload",
+]
+
+MIDDLEWARE += [
+    "django_browser_reload.middleware.BrowserReloadMiddleware",
+]
 
 ##########################################################################
 ## Sentry Error Management
@@ -55,15 +63,12 @@ EMAIL_FILE_PATH = PROJECT / "tmp" / "outbox"
 sentry_sdk.init(
     dsn=environ_setting("SENTRY_DSN"),
     integrations=[DjangoIntegration()],
-
     # Get release from Heroku environment or specify develop release
     release=get_sentry_release(),
     environment="development",
-
     # If you wish to associate users to errors (assuming you are using
     # django.contrib.auth) you may enable sending PII data.
     send_default_pii=True,
-
     # Set a uniform sample rate
     traces_sample_rate=1.0,
 )
