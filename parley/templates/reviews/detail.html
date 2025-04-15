@@ -200,6 +200,66 @@
   </div>
 </div><!-- model output ends -->
 
+<!-- evaluation detail starts -->
+<div class="row">
+  <div class="col-12">
+    <div class="card" id="evaluation">
+      <form action="{% url 'update-review' review.id %}" method="post">
+        <div class="card-header">
+          <h4 class="card-header-title">
+            Evaluation
+            {% if form.is_complete %}
+            <span class="badge bg-success-soft ms-auto">Completed</span>
+            {% else %}
+            <span class="badge bg-danger-soft ms-auto">Needs Review</span>
+            {% endif %}
+          </h4>
+          <button class="btn btn-sm btn-secondary" data-bs-toggle="collapse" data-bs-target="#evaluationForm" type="button">
+            Toggle
+          </button>
+        </div>
+        <div id="evaluationForm" class="card-body collapse {% if not form.is_complete %}show{% endif %}" data-bs-parent="#evaluation">
+          {% csrf_token %}
+          {{ form.as_p }}
+          <button type="submit" class="btn btn-sm btn-primary ms-2">
+            Save
+          </button>
+        </div>
+        <div class="card-footer">
+          {% if form.is_readable.value is not None %}
+          {% if form.is_readable.value %}
+            <span class="badge bg-success-soft ms-auto">
+              <i class="fe fe-check"></i>
+              Readable
+            </span>
+          {% else %}
+            <span class="badge bg-danger-soft ms-auto">
+              <i class="fe fe-x"></i>
+              Not Readable
+            </span>
+          {% endif %}
+          {% endif %}
+
+          {% if form.is_confabulation.value is not None %}
+          {% if form.is_confabulation.value %}
+            <span class="badge bg-danger-soft ms-auto">
+              <i class="fe fe-x"></i>
+              Has Confabulations
+            </span>
+          {% else %}
+            <span class="badge bg-success-soft ms-auto">
+              <i class="fe fe-check"></i>
+              No Confabulations
+            </span>
+          {% endif %}
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<hr />
+
 <!-- page controls -->
 <div class="row pb-4">
   <div class="col-12">

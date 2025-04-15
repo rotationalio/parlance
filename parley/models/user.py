@@ -27,10 +27,11 @@ from django.urls import reverse
 ## Models
 ##########################################################################
 
+
 class ReviewTask(TimestampedModel):
 
     user = models.ForeignKey(
-        'auth.User',
+        "auth.User",
         null=False,
         on_delete=models.CASCADE,
         related_name="review_tasks",
@@ -46,16 +47,20 @@ class ReviewTask(TimestampedModel):
     )
 
     responses = models.ManyToManyField(
-        'parley.Response', through='parley.ResponseReview'
+        "parley.Response", through="parley.ResponseReview"
     )
 
     started_on = models.DateTimeField(
-        null=True, default=None, blank=True,
-        help_text="The timestamp that the review was start on, null if not started"
+        null=True,
+        default=None,
+        blank=True,
+        help_text="The timestamp that the review was start on, null if not started",
     )
 
     completed_on = models.DateTimeField(
-        null=True, default=None, blank=True,
+        null=True,
+        default=None,
+        blank=True,
         help_text="The timestamp that the review was completed, null if not completed",
     )
 
@@ -110,7 +115,7 @@ class ResponseReview(TimestampedModel):
     )
 
     response = models.ForeignKey(
-        'parley.Response',
+        "parley.Response",
         null=False,
         on_delete=models.CASCADE,
         related_name="reviews",

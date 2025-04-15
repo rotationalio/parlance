@@ -29,13 +29,13 @@ from django.urls import reverse_lazy
 from django.utils.text import slugify
 from django.utils.safestring import mark_safe
 from django.views.generic.edit import FormView
-from django.views.generic import DetailView, ListView
+from django.views.generic import DetailView, ListView, UpdateView
 from django.core.exceptions import SuspiciousOperation
 from django.http import HttpResponse, Http404, HttpResponseNotAllowed
 
 from parley.exceptions import ParlanceUploadError
-from parley.forms import Uploader, CreateReviewForm
-from parley.models import LLM, Response, Evaluation, Prompt, ReviewTask
+from parley.forms import Uploader, CreateReviewForm, UpdateResponseReviewForm
+from parley.models import LLM, Response, Evaluation, Prompt, ReviewTask, ResponseReview
 
 
 CHART_METRICS = {
@@ -67,6 +67,7 @@ CHART_METRICS = {
 ##########################################################################
 ## Views
 ##########################################################################
+
 
 class UploaderFormView(FormView):
 
@@ -103,6 +104,7 @@ class UploaderFormView(FormView):
 ##########################################################################
 ## Evaluation Views
 ##########################################################################
+
 
 class EvaluationList(ListView):
 
@@ -143,7 +145,7 @@ class EvaluationDetail(DetailView):
                     ds = {"label": metric, "data": []}
                     chart["datasets"].append(ds)
 
-                ds["data"].append(getattr(me, "percent_"+pos.removeprefix("n_"), 0))
+                ds["data"].append(getattr(me, "percent_" + pos.removeprefix("n_"), 0))
 
         # Convert to chart data
         return {key: json.dumps(val) for key, val in chart.items()}
@@ -178,7 +180,7 @@ class DownloadPrompts(View):
                 "notes": prompt.notes,
                 "expected_output_type": prompt.expected_output_type,
                 "expected_output": prompt.expected_output,
-                "expected_labe": prompt.expected_label
+                "expected_label": prompt.expected_label,
             }
 
             reply.write(json.dumps(data) + "\n")
@@ -256,20 +258,14 @@ class LLMDetail(DetailView):
                     counts[metric]["neg"] += getattr(me, neg)
 
         # Convert to chart data
-        data = {
-            "labels": [],
-            "positive": [],
-            "negative": []
-        }
+        data = {"labels": [], "positive": [], "negative": []}
 
         for metric, count in counts.items():
             data["labels"].append(metric)
             data["positive"].append(count["pos"])
             data["negative"].append(count["neg"])
 
-        return {
-            key: json.dumps(val) for key, val in data.items()
-        }
+        return {key: json.dumps(val) for key, val in data.items()}
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -281,6 +277,7 @@ class LLMDetail(DetailView):
 ##########################################################################
 ## Response Views
 ##########################################################################
+
 
 class ResponseDetail(DetailView):
 
@@ -298,6 +295,7 @@ class ResponseDetail(DetailView):
 ## Review Tasks
 ##########################################################################
 
+
 class CreateReviewTask(FormView):
 
     form_class = CreateReviewForm
@@ -311,7 +309,7 @@ class CreateReviewTask(FormView):
         raise SuspiciousOperation("unable to create review task for logged in user")
 
     def get(self, *args, **kwargs):
-        return HttpResponseNotAllowed(['POST'])
+        return HttpResponseNotAllowed(["POST"])
 
 
 class ReviewTaskDetail(DetailView):
@@ -326,7 +324,10 @@ class ReviewTaskDetail(DetailView):
         if query:
             try:
                 obj = Response.objects.get(pk=query)
-                if obj.model != self.object.model or obj.prompt.evaluation != self.object.evaluation:
+                if (
+                    obj.model != self.object.model
+                    or obj.prompt.evaluation != self.object.evaluation
+                ):
                     raise Http404
                 return obj
             except Response.DoesNotExist:
@@ -343,4 +344,43 @@ class ReviewTaskDetail(DetailView):
         context = super().get_context_data(**kwargs)
         context["page_id"] = "review"
         context["response"] = self.get_response_object()
+        context["form"] = UpdateResponseReviewForm(
+            instance=self.object.response_reviews.filter(
+                review=context["review"], response=context["response"]
+            ).first(),
+        )
+        context["form"].fields["response"].initial = context["response"]
+        context["form"].fields["review"].initial = context["review"]
         return context
+
+
+class UpdateResponseReview(UpdateView):
+    """
+    Update the review of a response.
+    """
+
+    model = ResponseReview
+    form_class = UpdateResponseReviewForm
+    success_url = reverse_lazy("dashboard")
+
+    def get_success_url(self):
+        review_id = self.request.POST.get("review")
+        response_id = self.request.POST.get("response")
+        url = reverse_lazy("review-task", kwargs={"pk": review_id})
+        if response_id:
+            url += f"?response={response_id}"
+        return url
+
+    def get_object(self):
+        obj, _ = ResponseReview.objects.get_or_create(
+            review_id=self.request.POST.get("review"),
+            response_id=self.request.POST.get("response"),
+        )
+        return obj
+
+    def form_valid(self, form):
+        form.save()
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        raise SuspiciousOperation("unable to update review for logged in user")
