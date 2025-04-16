@@ -34,6 +34,7 @@ from parley.validators import validate_semver
 ## Helpers
 ##########################################################################
 
+
 def llm_cover_upload_path(instance, filename):
     _, ext = os.path.splitext(filename)
     return os.path.join("covers", "llms", f"{instance.id}{ext}")
@@ -42,6 +43,7 @@ def llm_cover_upload_path(instance, filename):
 ##########################################################################
 ## Models
 ##########################################################################
+
 
 class LLM(BaseModel):
     """
@@ -138,7 +140,8 @@ class LLM(BaseModel):
     )
 
     evaluations = models.ManyToManyField(
-        'parley.Evaluation', through='parley.ModelEvaluation',
+        "parley.Evaluation",
+        through="parley.ModelEvaluation",
     )
 
     class Meta:
@@ -246,7 +249,6 @@ class Response(BaseModel):
         help_text="Does the output contain sensitive data that should not be leaked?",
     )
 
-    # TODO: set this based on annotator agreement
     is_confabulation = models.BooleanField(
         null=True,
         default=None,
@@ -254,7 +256,6 @@ class Response(BaseModel):
         help_text="Is the output a hallucination or confabulation?",
     )
 
-    # TODO: set this based on annotator agreement
     is_readable = models.BooleanField(
         null=True,
         default=None,
@@ -302,6 +303,38 @@ class Response(BaseModel):
     @property
     def evaluation(self):
         return self.prompt.evaluation
+
+    def agree_boolean(self, key, true_threshold=0.5):
+        """
+        Compute agreement for a boolean field across all user reviews. If threshold is
+        between 0 and 1 then the proportion of reviews must have positive votes to be
+        considered true. If the threshold is >= 1 then the fied must have that number
+        of absolute votes to be considered true. None is returned if there are no
+        reviews for this response to avoid misleading results.
+        """
+        from parley.models.user import ResponseReview
+
+        if true_threshold < 0:
+            raise ValueError("Threshold must be greater than or equal to 0")
+
+        true_count = ResponseReview.objects.filter(response=self, **{key: True}).count()
+        false_count = ResponseReview.objects.filter(
+            response=self, **{key: False}
+        ).count()
+        if true_threshold < 1:
+            # Consider the proportion of true votes
+            total_count = true_count + false_count
+            if total_count == 0:
+                return None
+            proportion = float(true_count) / float(total_count)
+            return proportion >= true_threshold
+        else:
+            # Consider the absolute number of true votes
+            if true_count >= true_threshold:
+                return True
+            if false_count >= true_threshold:
+                return False
+            return None
 
     def get_previous(self):
         try:
@@ -384,96 +417,139 @@ class ModelEvaluation(BaseModel):
 
     # Cache Info
     metrics_cached = models.BooleanField(
-        default=False, editable=False,
+        default=False,
+        editable=False,
     )
 
     # Cache Info
     metrics_last_cached_on = models.DateTimeField(
-        default=None, null=True, editable=False,
+        default=None,
+        null=True,
+        editable=False,
     )
 
     # Cached metric
     n_prompts = models.IntegerField(
-        default=0, editable=False,
+        default=0,
+        editable=False,
     )
 
     # Cached metric
     n_responses = models.IntegerField(
-        default=0, editable=False,
+        default=0,
+        editable=False,
     )
 
     # Cached metric
     n_similar = models.IntegerField(
-        default=None, null=True, blank=True, editable=False,
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
     )
 
     # Cached metric
     n_not_similar = models.IntegerField(
-        default=None, null=True, blank=True, editable=False,
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
     )
 
     # Cached metric
     n_labeled_correctly = models.IntegerField(
-        default=None, null=True, blank=True, editable=False,
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
     )
 
     # Cached metric
     n_labeled_incorrectly = models.IntegerField(
-        default=None, null=True, blank=True, editable=False,
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
     )
 
     # Cached metric
     n_valid_output_type = models.IntegerField(
-        default=None, null=True, blank=True, editable=False,
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
     )
 
     # Cached metric
     n_invalid_output_type = models.IntegerField(
-        default=None, null=True, blank=True, editable=False,
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
     )
 
     # Cached metric
     n_leaks_sensitive = models.IntegerField(
-        default=None, null=True, blank=True, editable=False,
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
     )
 
     # Cached metric
     n_no_sensitive_leaks = models.IntegerField(
-        default=None, null=True, blank=True, editable=False,
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
     )
 
     # Cached metric
     n_confabulations = models.IntegerField(
-        default=None, null=True, blank=True, editable=False,
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
     )
 
     # Cached metric
     n_not_confabulation = models.IntegerField(
-        default=None, null=True, blank=True, editable=False,
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
     )
 
     # Cached metric
     n_readable = models.IntegerField(
-        default=None, null=True, blank=True, editable=False,
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
     )
 
     # Cached metric
     n_not_readable = models.IntegerField(
-        default=None, null=True, blank=True, editable=False,
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
     )
 
     class Meta:
         db_table = "model_evaluations"
         ordering = ("-created",)
         get_latest_by = "created"
-        unique_together = ('model', 'evaluation')
+        unique_together = ("model", "evaluation")
 
     def prompts(self):
         return self.evaluation.prompts.filter(exclude=False)
 
     def responses(self):
         return Response.objects.filter(
-            model=self.model, prompt__evaluation=self.evaluation, prompt__exclude=False,
+            model=self.model,
+            prompt__evaluation=self.evaluation,
+            prompt__exclude=False,
         )
 
     @property
@@ -500,7 +576,10 @@ class ModelEvaluation(BaseModel):
 
     @property
     def labels_processed(self):
-        return self.n_labeled_correctly is not None and self.n_labeled_incorrectly is not None
+        return (
+            self.n_labeled_correctly is not None
+            and self.n_labeled_incorrectly is not None
+        )
 
     @property
     def percent_labeled_correctly(self):
@@ -512,7 +591,10 @@ class ModelEvaluation(BaseModel):
 
     @property
     def valid_output_processed(self):
-        return self.n_valid_output_type is not None and self.n_invalid_output_type is not None
+        return (
+            self.n_valid_output_type is not None
+            and self.n_invalid_output_type is not None
+        )
 
     @property
     def percent_valid_output_type(self):
@@ -524,7 +606,9 @@ class ModelEvaluation(BaseModel):
 
     @property
     def sensitive_processed(self):
-        return self.n_leaks_sensitive is not None and self.n_no_sensitive_leaks is not None
+        return (
+            self.n_leaks_sensitive is not None and self.n_no_sensitive_leaks is not None
+        )
 
     @property
     def percent_leaks_sensitive(self):
@@ -536,7 +620,9 @@ class ModelEvaluation(BaseModel):
 
     @property
     def confabulations_processed(self):
-        return self.n_confabulations is not None and self.n_not_confabulation is not None
+        return (
+            self.n_confabulations is not None and self.n_not_confabulation is not None
+        )
 
     @property
     def percent_confabulations(self):
@@ -572,4 +658,4 @@ class ModelEvaluation(BaseModel):
         if total == 0:
             return 0.0
 
-        return round((float(field) / float(total))*100, 2)
+        return round((float(field) / float(total)) * 100, 2)
