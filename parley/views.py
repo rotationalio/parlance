@@ -23,7 +23,6 @@ import json
 from collections import defaultdict
 
 from django.views import View
-from django.shortcuts import render
 from django.db import transaction
 from django.contrib import messages
 from django.urls import reverse_lazy
