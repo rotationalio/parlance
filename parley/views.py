@@ -131,9 +131,6 @@ class EvaluationCreate(FormView):
         return super().form_valid(form)
 
     def form_invalid(self, form):
-        context = self.get_context_data()
-        # print(context["form"])
-        print(form.errors)
         raise SuspiciousOperation("unable to create evaluation for logged in user")
 
     def get(self, *args, **kwargs):
