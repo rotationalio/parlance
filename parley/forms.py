@@ -202,20 +202,18 @@ class EvaluationUploader(BaseUploader):
         # Ensure the message has a role and content
         role = message.get("role", None)
         if role not in allowed_roles:
-            raise ParlanceUploadError(
-                f"expected role field to be one of {allowed_roles}"
-            )
+            raise ValidationError(f"expected 'role' field to be one of {allowed_roles}")
         content = message.get("content", None)
         if content is None:
-            raise ParlanceUploadError("missing content field in message")
+            raise ValidationError("missing 'content' field in message")
         return role, content
 
     def parse_chat_messages(self, messages):
         # Must be at least one message
         if not isinstance(messages, list):
-            raise ParlanceUploadError("expected messages field to be a list")
+            raise ValidationError("expected 'messages' field to be a list")
         if len(messages) < 1:
-            raise ParlanceUploadError("expected at least one message in messages field")
+            raise ValidationError("expected at least one message in 'messages' field")
 
         # System message is the first message if present
         role, content = self.parse_message(
@@ -224,8 +222,8 @@ class EvaluationUploader(BaseUploader):
         if role == "system":
             system = content
             if len(messages) < 2:
-                raise ParlanceUploadError(
-                    "expected at least one user message in messages field"
+                raise ValidationError(
+                    "expected at least one user message in 'messages' field"
                 )
             role, content = self.parse_message(messages[1], allowed_roles=["user"])
             user = content
@@ -237,10 +235,10 @@ class EvaluationUploader(BaseUploader):
     def parse_chat_completions(self, completions):
         # Must be at least one completion
         if not isinstance(completions, list):
-            raise ParlanceUploadError("expected completions field to be a list")
+            raise ValidationError("expected 'completions' field to be a list")
         if len(completions) < 1:
-            raise ParlanceUploadError(
-                "expected at least one completion in completions field"
+            raise ValidationError(
+                "expected at least one completion in 'completions' field"
             )
 
         # Assume first completion is the best
@@ -253,18 +251,36 @@ class EvaluationUploader(BaseUploader):
             system, prompt = self.parse_chat_messages(messages)
             completions = obj.get("completions", None)
             if completions is None:
-                raise ParlanceUploadError("missing completions field in prompt")
+                raise ValidationError("expected 'completions' field in prompt")
             response = self.parse_chat_completions(completions)
         else:
             system = obj.get("system", None)
             prompt = obj.get("prompt", None)
             response = obj.get("response", None)
             if prompt is None:
-                raise ParlanceUploadError("missing prompt field in prompt")
+                raise ValidationError("expected 'prompt' field in prompt")
             if response is None:
-                raise ParlanceUploadError("missing response field in prompt")
+                raise ValidationError("expected 'response' field in prompt")
+        model = obj.get("model", None)
+        if model is None:
+            raise ValidationError("expected 'model' field in prompt")
+        return system, prompt, response, model
 
-        return system, prompt, response
+    def parse_model(self, obj):
+        # Ensure the model JSON has a name and created field
+        name = obj.get("name", None)
+        if name is None:
+            raise ValidationError("expected 'name' field in model JSON")
+        created = obj.get("created", None)
+        if created is None:
+            raise ValidationError("expected 'created' field in model JSON")
+        try:
+            created = make_aware(datetime.fromtimestamp(created))
+        except Exception:
+            raise ValidationError(
+                f'could not parse created field "{created}", expected a unix timestamp'
+            )
+        return name, created
 
     def handle_upload(self):
         # Create the evaluation object
@@ -280,10 +296,13 @@ class EvaluationUploader(BaseUploader):
             model_file = self.cleaned_data["models_file"]
             path = self.write_temporary_file(td, model_file)
             for r, row in self.read_jsonlines(path):
-                llm, _ = LLM.objects.get_or_create(
-                    name=row["name"],
-                    trained_on=make_aware(datetime.fromtimestamp(row["created"])),
-                )
+                try:
+                    name, created = self.parse_model(row)
+                except ValidationError as e:
+                    raise ParlanceUploadError(
+                        f"invalid model JSON on line {r} of {model_file.name}: {e}"
+                    )
+                llm, _ = LLM.objects.get_or_create(name=name, trained_on=created)
                 evaluation.llms.add(llm)
                 counts.increment(model_file.name, llm, True)
 
@@ -293,7 +312,12 @@ class EvaluationUploader(BaseUploader):
             prompts_file = self.cleaned_data["prompts_file"]
             path = self.write_temporary_file(td, prompts_file)
             for r, row in self.read_jsonlines(path):
-                system, user, assistant = self.parse_prompt(row)
+                try:
+                    system, user, assistant, model = self.parse_prompt(row)
+                except ValidationError as e:
+                    raise ParlanceUploadError(
+                        f"invalid prompt JSON on line {r} of {prompts_file.name}: {e}"
+                    )
                 key = (system, user)
                 if key not in prompts:
                     prompt = Prompt.objects.create(
@@ -308,11 +332,9 @@ class EvaluationUploader(BaseUploader):
 
                 # Add the response for this prompt
                 try:
-                    llm = LLM.objects.get(name=row["model"], evaluation=evaluation)
+                    llm = LLM.objects.get(name=model, evaluation=evaluation)
                 except LLM.DoesNotExist:
-                    raise ParlanceUploadError(
-                        f"could not find model by name \"{row['model']}\""
-                    )
+                    raise ParlanceUploadError(f"could not find model by name '{model}'")
 
                 # We only support one response per prompt per model
                 try:
@@ -333,7 +355,7 @@ class EvaluationUploader(BaseUploader):
                     )
                 except IntegrityError:
                     raise ParlanceUploadError(
-                        f"duplicate prompt for model \"{row['model']}\" at line {r} of {prompts_file.name}"
+                        f"duplicate prompt for model '{model}' at line {r} of {prompts_file.name}"
                     )
                 counts.increment(prompts_file.name, response, True)
 

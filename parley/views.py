@@ -118,19 +118,22 @@ class EvaluationCreate(FormView):
 
     def get_success_url(self):
         # Redirect to the evaluation detail page after successful upload
-        return self.evaluation.get_absolute_url()
+        return reverse_lazy("evaluation-detail", kwargs={"pk": self.evaluation.pk})
 
     def form_valid(self, form):
-        evaluation, counts = form.handle_upload()
+        try:
+            evaluation, counts = form.handle_upload()
+        except ParlanceUploadError as e:
+            # If an error occurs, stop processing and show the error to the user.
+            form.add_error(None, str(e))
+            return self.form_invalid(form)
+
         self.evaluation = evaluation
         messages.success(
             self.request,
             mark_safe(counts.html()),
         )
         return super().form_valid(form)
-
-    def form_invalid(self, form):
-        raise SuspiciousOperation("unable to create evaluation for logged in user")
 
     def get(self, *args, **kwargs):
         return HttpResponseNotAllowed(["POST"])
