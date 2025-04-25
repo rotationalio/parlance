@@ -36,7 +36,12 @@ from django.urls import path, include
 
 from parley.views import ReviewTaskDetail
 from parley.views import LLMList, LLMDetail
-from parley.views import EvaluationList, EvaluationDetail
+from parley.views import (
+    EvaluationList,
+    EvaluationDetail,
+    EvaluationCreate,
+    EvaluationDelete,
+)
 from parley.views import DownloadPrompts, DownloadAnalytics
 from parlance.views import Dashboard, AccountSettings, AccountProfile
 from parley.views import (
@@ -58,6 +63,7 @@ urlpatterns = [
     path("account/profile", AccountProfile.as_view(), name="account-profile"),
     path("account/settings", AccountSettings.as_view(), name="account-settings"),
     path("evaluations/", EvaluationList.as_view(), name="evaluations-list"),
+    path("evaluations/create", EvaluationCreate.as_view(), name="evaluation-create"),
     path("evaluations/<uuid:pk>", EvaluationDetail.as_view(), name="evaluation-detail"),
     path(
         "evaluations/<uuid:pk>/download",
@@ -68,6 +74,11 @@ urlpatterns = [
         "evaluations/<uuid:pk>/analytics",
         DownloadAnalytics.as_view(),
         name="evaluation-analytics",
+    ),
+    path(
+        "evaluations/<uuid:pk>/delete",
+        EvaluationDelete.as_view(),
+        name="evaluation-delete",
     ),
     path(
         "evaluations/create-review-task",

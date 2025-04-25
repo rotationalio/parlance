@@ -23,18 +23,24 @@ import json
 from collections import defaultdict
 
 from django.views import View
+from django.http import HttpResponseRedirect
 from django.db import transaction
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.utils.text import slugify
 from django.utils.safestring import mark_safe
 from django.views.generic.edit import FormView
-from django.views.generic import DetailView, ListView, UpdateView
+from django.views.generic import DetailView, ListView, UpdateView, DeleteView
 from django.core.exceptions import SuspiciousOperation
 from django.http import HttpResponse, Http404, HttpResponseNotAllowed
 
 from parley.exceptions import ParlanceUploadError
-from parley.forms import Uploader, CreateReviewForm, UpdateResponseReviewForm
+from parley.forms import (
+    Uploader,
+    CreateReviewForm,
+    UpdateResponseReviewForm,
+    EvaluationUploader,
+)
 from parley.models import LLM, Response, Evaluation, Prompt, ReviewTask, ResponseReview
 
 
@@ -106,6 +112,41 @@ class UploaderFormView(FormView):
 ##########################################################################
 
 
+class EvaluationCreate(FormView):
+
+    template_name = "evaluation/list.html"
+    form_class = EvaluationUploader
+
+    def get_success_url(self):
+        # Redirect to the evaluation detail page after successful upload
+        return self.evaluation.get_absolute_url()
+
+    def form_valid(self, form):
+        evaluation, counts = form.handle_upload()
+        self.evaluation = evaluation
+        messages.success(
+            self.request,
+            mark_safe(counts.html()),
+        )
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        context = self.get_context_data()
+        # print(context["form"])
+        print(form.errors)
+        raise SuspiciousOperation("unable to create evaluation for logged in user")
+
+    def get(self, *args, **kwargs):
+        return HttpResponseNotAllowed(["POST"])
+
+    @transaction.atomic
+    def post(self, *args, **kwargs):
+        """
+        Ensures that all database operations during a request are all or nothing.
+        """
+        return super().post(*args, **kwargs)
+
+
 class EvaluationList(ListView):
 
     model = Evaluation
@@ -155,6 +196,22 @@ class EvaluationDetail(DetailView):
         context["page_id"] = "evaluation"
         context["chart"] = self.get_chart_data()
         return context
+
+
+class EvaluationDelete(DeleteView):
+    """
+    Delete an evaluation and all associated data.
+    """
+
+    model = Evaluation
+    template_name = "evaluation/list.html"
+    success_url = reverse_lazy("evaluations-list")
+
+    def get(self, *args, **kwargs):
+        """
+        Prevent GET requests to delete an evaluation.
+        """
+        return HttpResponseNotAllowed(["POST"])
 
 
 class DownloadPrompts(View):
