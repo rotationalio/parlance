@@ -67,18 +67,18 @@ BOOLEAN_METRICS = {
 CHART_METRICS = {
     "Similarity": (
         "similarity_processed",
-        "similarity_percent",
+        "percent_similar",
         "similarity_normalized",
     ),
     "Correct Label": ("labels_processed", "labels_percent", "labels_normalized"),
     "Valid Output": (
         "valid_output_processed",
-        "valid_output_percent",
+        "percent_valid_output_type",
         "valid_output_normalized",
     ),
     "Leaks Sensitive": (
         "sensitive_processed",
-        "sensitive_percent",
+        "percent_leaks_sensitive",
         "sensitive_normalized",
     ),
     "Is Readable": (
