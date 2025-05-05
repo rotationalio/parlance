@@ -720,7 +720,7 @@ class ModelEvaluation(BaseModel):
 
     @property
     def percent_factual(self):
-        return self._percent(self.n_not_factual, self.n_not_factual)
+        return self._percent(self.n_factual, self.n_not_factual)
 
     @property
     def percent_not_factual(self):

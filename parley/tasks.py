@@ -98,9 +98,9 @@ def cache_metrics(me: ModelEvaluation):
             setattr(me, median, None)
             continue
 
-        vals = values[field]
-        setattr(me, mean, sum(vals) / len(vals))
-        setattr(me, median, sorted(vals)[len(vals) // 2])
+        vals = [item for sublist in values[field].values() for item in sublist]
+        setattr(me, mean, sum(vals) / len(vals) if len(vals) > 0 else None)
+        setattr(me, median, sorted(vals)[len(vals) // 2] if len(vals) > 0 else None)
 
     me.metrics_cached = True
     me.metrics_last_cached_on = timezone.localtime()
