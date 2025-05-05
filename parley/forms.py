@@ -329,6 +329,12 @@ class EvaluationUploader(BaseUploader):
                     prompts.add(key)
                     order += 1
                     counts.increment(prompts_file.name, prompt, True)
+                else:
+                    prompt = Prompt.objects.get(
+                        system=system,
+                        prompt=user,
+                        evaluation=evaluation,
+                    )
 
                 # Add the response for this prompt
                 try:
@@ -353,7 +359,7 @@ class EvaluationUploader(BaseUploader):
                             else None
                         ),
                     )
-                except IntegrityError:
+                except IntegrityError as e:
                     raise ParlanceUploadError(
                         f"duplicate prompt for model '{model}' at line {r} of {prompts_file.name}"
                     )
@@ -382,11 +388,14 @@ class CreateReviewForm(forms.Form):
 class UpdateResponseReviewForm(forms.ModelForm):
     class Meta:
         model = ResponseReview
-        fields = ["is_readable", "is_confabulation", "review", "response"]
-        widgets = {
-            "review": forms.HiddenInput(),
-            "response": forms.HiddenInput(),
-        }
+        fields = [
+            "is_readable",
+            "is_factual",
+            "is_correct_style",
+            "helpfulness",
+            "review",
+            "response",
+        ]
 
     def is_complete(self):
         if not hasattr(self, "cleaned_data"):
@@ -396,14 +405,14 @@ class UpdateResponseReviewForm(forms.ModelForm):
                 if self.instance and self.instance.pk:
                     return (
                         self.instance.is_readable is not None
-                        and self.instance.is_confabulation is not None
+                        and self.instance.is_factual is not None
+                        and self.instance.is_correct_style is not None
+                        and self.instance.helpfulness is not None
                     )
                 return False
 
-        return (
-            self.cleaned_data.get("is_readable") is not None
-            and self.cleaned_data.get("is_confabulation") is not None
-        )
+        check_fields = ["is_readable", "is_factual", "is_correct_style", "helpfulness"]
+        return all(self.cleaned_data.get(field) is not None for field in check_fields)
 
     def save(self):
         response_review, _ = ResponseReview.objects.get_or_create(

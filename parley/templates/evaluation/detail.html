@@ -141,10 +141,15 @@
     <div class="col-12">
       <div class="card">
         <div class="card-header">
-          <h4 class="card-header-title">Metrics</h4>
+          <h4 class="card-header-title">Normalized Metrics</h4>
         </div>
         <div class="chart">
           <canvas id="metricsChart" class="chart-canvas"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h4 class="card-header-title">Boolean Metrics</h4>
         </div>
         <div class="table-responsive mb-0">
           <table class="table table-sm table-nowrap card-table">
@@ -191,12 +196,12 @@
                 <td class="text-center">{{ eval.n_labeled_incorrectly }} ({{ eval.percent_labeled_incorrectly }}%)</td>
               </tr>
               {% endif %}
-              {% if eval.confabulations_processed %}
+              {% if eval.factual_processed %}
               <tr>
                 <td>{{ eval.model.name }}</td>
-                <td>Confabulations</td>
-                <td class="text-center">{{ eval.n_confabulations }} ({{ eval.percent_confabulations }}%)</td>
-                <td class="text-center">{{ eval.n_not_confabulation }} ({{ eval.percent_not_confabulation }}%)</td>
+                <td>Is Factual</td>
+                <td class="text-center">{{ eval.n_factual }} ({{ eval.percent_factual }}%)</td>
+                <td class="text-center">{{ eval.n_not_factual }} ({{ eval.percent_not_factual }}%)</td>
               </tr>
               {% endif %}
               {% if eval.readability_processed %}
@@ -208,10 +213,51 @@
               </tr>
               {% endif %}
               {% endif %}
+              {% if eval.style_processed %}
+              <tr>
+                <td>{{ eval.model.name }}</td>
+                <td>Is Correct Style</td>
+                <td class="text-center">{{ eval.n_correct_style }} ({{ eval.percent_correct_style }}%)</td>
+                <td class="text-center">{{ eval.n_incorrect_style }} ({{ eval.percent_incorrect_style }}%)</td>
+              </tr>
+              {% endif %}
               {% empty %}
               <tr>
                 <td colspan="4">No Evaluations Run</td>
               </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h4 class="card-header-title">Scalar Metrics</h4>
+        </div>
+        <div class="table-responsive mb-0">
+          <table class="table table-sm table-nowrap card-table">
+            <thead>
+              <tr>
+                <th>Evaluation</th>
+                <th>Metric</th>
+                <th class="text-center">Mean</th>
+                <th class="text-center">Median</th>
+                <th class="text-center">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for eval in evaluation.model_evaluations.all %}
+              {% if eval.metrics_cached %}
+              {% if eval.helpfulness_processed %}
+              <tr>
+                <td>{{ eval.model.name }}</td>
+                <td>Helpfulness</td>
+                <td class="text-center">{{ eval.mean_helpfulness|floatformat:2 }}</td>
+                <td class="text-center">{{ eval.median_helpfulness|floatformat:2 }}</td>
+                <td class="text-center">{{ eval.n_responses }}</td>
+              </tr>
+              {% endif %}
+              {% endif %}
               {% endfor %}
             </tbody>
           </table>
@@ -227,14 +273,37 @@
     new Chart('metricsChart', {
       type: 'bar',
       options: {
+        indexAxis: 'y',  // Make bars horizontal
         barThickness: 24,
-        scales: {
-          y: {
-            ticks: {
-              callback: function(value) {
-                return value + '%';
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: {
+              boxWidth: 12,
+              padding: 20
+            }
+          },
+          tooltip: {
+            mode: 'y',
+            position: 'nearest',
+            callbacks: {
+              label: function(context) {
+                const model = context.dataset.label;
+                const value = context.dataset.trueValues[context.dataIndex];
+                return `${model}: ${value}`;
               }
             }
+          }
+        },
+        scales: {
+          x: {
+            stacked: true,
+            min: 0,
+            max: 1,
+          },
+          y: {
+            stacked: true
           }
         }
       },
