@@ -238,6 +238,9 @@ class EvaluationDetail(DetailView):
                 true_value,
                 normalized,
             ) in CHART_METRICS.items():
+                if metric_name not in labels:
+                    continue
+
                 if getattr(model, processed):
                     dataset["data"].append(getattr(model, normalized))
                     true_value = round(getattr(model, true_value), 2)
@@ -245,8 +248,12 @@ class EvaluationDetail(DetailView):
                         # Handle percentages
                         true_value = f"{true_value} %"
                     dataset["trueValues"].append(true_value)
-                    dataset["borderColor"] = model_colors[str(model.id)]
-                    dataset["backgroundColor"] = model_colors[str(model.id)]
+                else:
+                    dataset["data"].append(0)
+                    dataset["trueValues"].append(0)
+
+                dataset["borderColor"] = model_colors[str(model.id)]
+                dataset["backgroundColor"] = model_colors[str(model.id)]
 
             datasets.append(dataset)
 
