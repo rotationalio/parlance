@@ -18,7 +18,7 @@
   <div class="col-12">
     <div class="card">
       <div class="card-header">
-        <h4 class="card-header-title">Metrics</h4>
+        <h4 class="card-header-title">Boolean Metrics</h4>
       </div>
 
       <div class="table-responsive mb-0">
@@ -66,12 +66,12 @@
               <td class="text-center">{{ eval.n_labeled_incorrectly }} ({{ eval.percent_labeled_incorrectly }}%)</td>
             </tr>
             {% endif %}
-            {% if eval.confabulations_processed %}
+            {% if eval.factual_processed %}
             <tr>
               <td>{{ eval.evaluation.name }}</td>
-              <td>Confabulations</td>
-              <td class="text-center">{{ eval.n_confabulations }} ({{ eval.percent_confabulations }}%)</td>
-              <td class="text-center">{{ eval.n_not_confabulation }} ({{ eval.percent_not_confabulation }}%)</td>
+              <td>Is Factual</td>
+              <td class="text-center">{{ eval.n_factual }} ({{ eval.percent_factual }}%)</td>
+              <td class="text-center">{{ eval.n_not_factual }} ({{ eval.percent_not_factual }}%)</td>
             </tr>
             {% endif %}
             {% if eval.readability_processed %}
@@ -82,11 +82,52 @@
               <td class="text-center">{{ eval.n_not_readable }} ({{ eval.percent_not_readable }}%)</td>
             </tr>
             {% endif %}
+            {% if eval.style_processed %}
+            <tr>
+              <td>{{ eval.evaluation.name }}</td>
+              <td>Is Correct Style</td>
+              <td class="text-center">{{ eval.n_correct_style }} ({{ eval.percent_correct_style }}%)</td>
+              <td class="text-center">{{ eval.n_incorrect_style }} ({{ eval.percent_incorrect_style }}%)</td>
+            </tr>
+            {% endif %}
             {% endif %}
             {% empty %}
             <tr>
               <td colspan="4">No Evaluations Run</td>
             </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <h4 class="card-header-title">Scalar Metrics</h4>
+      </div>
+      <div class="table-responsive mb-0">
+        <table class="table table-sm table-nowrap card-table">
+          <thead>
+            <tr>
+              <th>Evaluation</th>
+              <th>Metric</th>
+              <th class="text-center">Mean</th>
+              <th class="text-center">Median</th>
+              <th class="text-center">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for eval in llm.model_evaluations.all %}
+            {% if eval.metrics_cached %}
+            {% if eval.helpfulness_processed %}
+            <tr>
+              <td>{{ eval.evaluation.name }}</td>
+              <td>Helpfulness</td>
+              <td class="text-center">{{ eval.mean_helpfulness }}</td>
+              <td class="text-center">{{ eval.median_helpfulness }}</td>
+              <td class="text-center">{{ eval.n_responses }}</td>
+            </tr>
+            {% endif %}
+            {% endif %}
             {% endfor %}
           </tbody>
         </table>
@@ -106,14 +147,7 @@
       },
       data: {
         labels: {{ chart.labels|safe }},
-        datasets: [{
-          label: 'Positive',
-          data: {{ chart.positive|safe }}
-        }, {
-          label: 'Negative',
-          data: {{ chart.negative|safe }},
-          backgroundColor: '#d2ddec',
-        }]
+        datasets: {{ chart.datasets|safe }},
       }
     });
   </script>

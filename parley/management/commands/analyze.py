@@ -64,10 +64,25 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "-F",
-            "--confabulation-threshold",
+            "--factual-threshold",
             type=float,
             default=0.5,
-            help="agreement threshold for confabulation evaluation",
+            help="agreement threshold for factual evaluation",
+        )
+        parser.add_argument(
+            "-T",
+            "--style-threshold",
+            type=float,
+            default=0.5,
+            help="agreement threshold for style evaluation",
+        )
+        parser.add_argument(
+            "-M",
+            "--helpfulness-metric",
+            type=str,
+            default="mean",
+            choices=["mean", "median"],
+            help="metric to use for helpfulness evaluation",
         )
         parser.add_argument(
             "-A",
@@ -132,11 +147,17 @@ class Command(BaseCommand):
 
             # Compute annotator agreement for the model evaluation
             for response in me.responses():
-                response.is_confabulation = response.agree_boolean(
-                    "is_confabulation", true_threshold=opts["confabulation_threshold"]
+                response.is_factual = response.agree_boolean(
+                    "is_factual", true_threshold=opts["factual_threshold"]
                 )
                 response.is_readable = response.agree_boolean(
                     "is_readable", true_threshold=opts["readable_threshold"]
+                )
+                response.is_correct_style = response.agree_boolean(
+                    "is_correct_style", true_threshold=opts["style_threshold"]
+                )
+                response.helpfulness = response.agree_likert(
+                    "helpfulness", method=opts["helpfulness_metric"]
                 )
                 response.save()
 

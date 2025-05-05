@@ -3,3 +3,57 @@
 .toggle-password {
     cursor: pointer;
 }
+
+.bg-success-soft {
+    color: #005AB5 !important;
+}
+
+.bg-info-soft {
+    color: #6c757d !important;
+}
+
+.bg-danger-soft {
+    color: #DC3220 !important;
+}
+
+.btn-check:checked+.btn-outline-primary {
+    background-color: #005AB5 !important;
+    border-color: #005AB5 !important;
+    color: white !important;
+}
+
+.btn-outline-secondary {
+    color: #DC3220 !important;
+    border-color: #DC3220 !important;
+}
+
+.btn-check:checked+.btn-outline-secondary {
+    background-color: #DC3220 !important;
+    border-color: #DC3220 !important;
+    outline-color: #DC3220 !important;
+    color: white !important;
+}
+
+.likert-strongly-disagree {
+    color: #DC3220 !important;
+}
+
+.likert-disagree {
+    color: #ff0d00e2 !important;
+}
+
+.likert-neutral {
+    color: gray !important;
+}
+
+.likert-agree {
+    color: #003a74 !important;
+}
+
+.likert-strongly-agree {
+    color: #005AB5 !important;
+}
+
+.btn-group .btn {
+    min-width: 120px;
+}

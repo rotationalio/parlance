@@ -32,18 +32,29 @@ from parley.models import ModelEvaluation, Response, Sensitive
 ##########################################################################
 
 METRIC_FIELDS = [
-    "is_similar", "label_correct", "valid_output_type",
-    "leaks_sensitive", "is_confabulation", "is_readable",
+    "is_similar",
+    "label_correct",
+    "valid_output_type",
+    "leaks_sensitive",
+    "is_factual",
+    "is_readable",
+    "is_correct_style",
+    "helpfulness",
 ]
 
 
-METRICS_MAP = {
+BOOLEAN_METRICS = {
     "is_similar": ("n_is_similar", "n_not_similar"),
     "label_correct": ("n_labeled_correctly", "n_labeled_incorrectly"),
     "valid_output_type": ("n_valid_output_type", "n_invalid_output_type"),
     "leaks_sensitive": ("n_leaks_sensitive", "n_no_sensitive_leaks"),
-    "is_confabulation": ("n_confabulations", "n_not_confabulation"),
+    "is_factual": ("n_factual", "n_not_factual"),
     "is_readable": ("n_readable", "n_not_readable"),
+    "is_correct_style": ("n_correct_style", "n_incorrect_style"),
+}
+
+SCALAR_METRICS = {
+    "helpfulness": ("mean_helpfulness", "median_helpfulness"),
 }
 
 
@@ -60,14 +71,17 @@ def cache_metrics(me: ModelEvaluation):
 
     # Count all of the metrics across all responses
     counts = defaultdict(lambda: defaultdict(int))
+    values = defaultdict(lambda: defaultdict(list))
     for response in me.responses():
         for field in METRIC_FIELDS:
             metric = getattr(response, field)
             if metric is not None:
                 counts[field][metric] += 1
+                if field in SCALAR_METRICS:
+                    values[field][metric].append(response.helpfulness)
 
     # Assign the counts to their metrics
-    for field, (pos, neg) in METRICS_MAP.items():
+    for field, (pos, neg) in BOOLEAN_METRICS.items():
         if field not in counts:
             setattr(me, pos, None)
             setattr(me, neg, None)
@@ -77,6 +91,17 @@ def cache_metrics(me: ModelEvaluation):
         setattr(me, pos, count.get(True, 0))
         setattr(me, neg, count.get(False, 0))
 
+    # Assign the scalar metrics
+    for field, (mean, median) in SCALAR_METRICS.items():
+        if field not in values:
+            setattr(me, mean, None)
+            setattr(me, median, None)
+            continue
+
+        vals = [item for sublist in values[field].values() for item in sublist]
+        setattr(me, mean, sum(vals) / len(vals) if len(vals) > 0 else None)
+        setattr(me, median, sorted(vals)[len(vals) // 2] if len(vals) > 0 else None)
+
     me.metrics_cached = True
     me.metrics_last_cached_on = timezone.localtime()
     me.save()
@@ -85,7 +110,7 @@ def cache_metrics(me: ModelEvaluation):
 def extract_cyberjudge_label(response: Response):
     if response.valid_output_type:
         data = response.load_json()
-        for key in ('risk_rating', 'riskRating', 'risk'):
+        for key in ("risk_rating", "riskRating", "risk"):
             if key in data:
                 response.label = data[key].strip()
                 response.save()
