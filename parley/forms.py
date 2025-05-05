@@ -359,7 +359,7 @@ class EvaluationUploader(BaseUploader):
                             else None
                         ),
                     )
-                except IntegrityError as e:
+                except IntegrityError:
                     raise ParlanceUploadError(
                         f"duplicate prompt for model '{model}' at line {r} of {prompts_file.name}"
                     )
