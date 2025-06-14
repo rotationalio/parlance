@@ -125,11 +125,13 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.humanize",
+    "djk8s",
     "parley",
 ]
 
 # Request Handling
 MIDDLEWARE = [
+    "djk8s.middleware.ProbeMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
