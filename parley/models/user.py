@@ -18,6 +18,7 @@ Implements models need to track user evaluations and reviews.
 ##########################################################################
 
 from .base import TimestampedModel
+from .enums import FivePointLikert
 
 from django.db import models
 from django.urls import reverse
@@ -27,10 +28,11 @@ from django.urls import reverse
 ## Models
 ##########################################################################
 
+
 class ReviewTask(TimestampedModel):
 
     user = models.ForeignKey(
-        'auth.User',
+        "auth.User",
         null=False,
         on_delete=models.CASCADE,
         related_name="review_tasks",
@@ -46,16 +48,20 @@ class ReviewTask(TimestampedModel):
     )
 
     responses = models.ManyToManyField(
-        'parley.Response', through='parley.ResponseReview'
+        "parley.Response", through="parley.ResponseReview"
     )
 
     started_on = models.DateTimeField(
-        null=True, default=None, blank=True,
-        help_text="The timestamp that the review was start on, null if not started"
+        null=True,
+        default=None,
+        blank=True,
+        help_text="The timestamp that the review was start on, null if not started",
     )
 
     completed_on = models.DateTimeField(
-        null=True, default=None, blank=True,
+        null=True,
+        default=None,
+        blank=True,
         help_text="The timestamp that the review was completed, null if not completed",
     )
 
@@ -110,7 +116,7 @@ class ResponseReview(TimestampedModel):
     )
 
     response = models.ForeignKey(
-        'parley.Response',
+        "parley.Response",
         null=False,
         on_delete=models.CASCADE,
         related_name="reviews",
@@ -136,11 +142,11 @@ class ResponseReview(TimestampedModel):
         ),
     )
 
-    is_confabulation = models.BooleanField(
+    is_factual = models.BooleanField(
         null=True,
         default=None,
         blank=True,
-        help_text="Is the output a hallucination or confabulation?",
+        help_text="Is the output factually correct?",
     )
 
     is_readable = models.BooleanField(
@@ -148,6 +154,21 @@ class ResponseReview(TimestampedModel):
         default=None,
         blank=True,
         help_text="Does the output contain grammatically correct, understandable language?",
+    )
+
+    is_correct_style = models.BooleanField(
+        null=True,
+        default=None,
+        blank=True,
+        help_text="Is the output written in the correct style or tone?",
+    )
+
+    helpfulness = models.IntegerField(
+        choices=FivePointLikert.choices,
+        null=True,
+        default=None,
+        blank=True,
+        help_text="This output is helpful to the reader",
     )
 
     notes = models.TextField(

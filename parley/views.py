@@ -29,16 +29,20 @@ from django.urls import reverse_lazy
 from django.utils.text import slugify
 from django.utils.safestring import mark_safe
 from django.views.generic.edit import FormView
-from django.views.generic import DetailView, ListView
+from django.views.generic import DetailView, ListView, UpdateView, DeleteView
 from django.core.exceptions import SuspiciousOperation
 from django.http import HttpResponse, Http404, HttpResponseNotAllowed
 
 from parley.exceptions import ParlanceUploadError
-from parley.forms import Uploader, CreateReviewForm
-from parley.models import LLM, Response, Evaluation, Prompt, ReviewTask
+from parley.forms import (
+    Uploader,
+    CreateReviewForm,
+    UpdateResponseReviewForm,
+    EvaluationUploader,
+)
+from parley.models import LLM, Response, Evaluation, Prompt, ReviewTask, ResponseReview
 
-
-CHART_METRICS = {
+BOOLEAN_METRICS = {
     "Similarity": ("similarity_processed", "n_is_similar", "n_not_similar"),
     "Correct Label": (
         "labels_processed",
@@ -55,18 +59,56 @@ CHART_METRICS = {
         "n_leaks_sensitive",
         "n_no_sensitive_leaks",
     ),
-    "Confabulations": (
-        "confabulations_processed",
-        "n_confabulations",
-        "n_not_confabulation",
-    ),
     "Is Readable": ("readability_processed", "n_readable", "n_not_readable"),
+    "Is Factual": ("factual_processed", "n_factual", "n_not_factual"),
+    "Is Correct Style": ("style_processed", "n_correct_style", "n_incorrect_style"),
+}
+
+CHART_METRICS = {
+    "Similarity": (
+        "similarity_processed",
+        "percent_similar",
+        "similarity_normalized",
+    ),
+    "Correct Label": ("labels_processed", "labels_percent", "labels_normalized"),
+    "Valid Output": (
+        "valid_output_processed",
+        "percent_valid_output_type",
+        "valid_output_normalized",
+    ),
+    "Leaks Sensitive": (
+        "sensitive_processed",
+        "percent_leaks_sensitive",
+        "sensitive_normalized",
+    ),
+    "Is Readable": (
+        "readability_processed",
+        "percent_readable",
+        "readability_normalized",
+    ),
+    "Is Factual": ("factual_processed", "percent_factual", "factual_normalized"),
+    "Is Correct Style": (
+        "style_processed",
+        "percent_correct_style",
+        "style_normalized",
+    ),
+    "Mean Helpfulness": (
+        "helpfulness_processed",
+        "mean_helpfulness",
+        "mean_helpfulness_normalized",
+    ),
+    "Median Helpfulness": (
+        "helpfulness_processed",
+        "median_helpfulness",
+        "median_helpfulness_normalized",
+    ),
 }
 
 
 ##########################################################################
 ## Views
 ##########################################################################
+
 
 class UploaderFormView(FormView):
 
@@ -104,6 +146,42 @@ class UploaderFormView(FormView):
 ## Evaluation Views
 ##########################################################################
 
+
+class EvaluationCreate(FormView):
+
+    template_name = "evaluation/list.html"
+    form_class = EvaluationUploader
+
+    def get_success_url(self):
+        # Redirect to the evaluation detail page after successful upload
+        return reverse_lazy("evaluation-detail", kwargs={"pk": self.evaluation.pk})
+
+    def form_valid(self, form):
+        try:
+            evaluation, counts = form.handle_upload()
+        except ParlanceUploadError as e:
+            # If an error occurs, stop processing and show the error to the user.
+            form.add_error(None, str(e))
+            return self.form_invalid(form)
+
+        self.evaluation = evaluation
+        messages.success(
+            self.request,
+            mark_safe(counts.html()),
+        )
+        return super().form_valid(form)
+
+    def get(self, *args, **kwargs):
+        return HttpResponseNotAllowed(["POST"])
+
+    @transaction.atomic
+    def post(self, *args, **kwargs):
+        """
+        Ensures that all database operations during a request are all or nothing.
+        """
+        return super().post(*args, **kwargs)
+
+
 class EvaluationList(ListView):
 
     model = Evaluation
@@ -126,33 +204,98 @@ class EvaluationDetail(DetailView):
     context_object_name = "evaluation"
 
     def get_chart_data(self):
-        # Create chart data
-        chart = {"labels": [], "datasets": []}
+        # Colors
+        # TODO: Use an actual color palette that we can dynamically select colors from
+        colors = [
+            "rgb(255, 99, 132)",
+            "rgb(54, 162, 235)",
+            "rgb(255, 206, 86)",
+            "rgb(75, 192, 192)",
+            "rgb(153, 102, 255)",
+        ]
+        color_index = 0
 
-        for me in self.object.model_evaluations.all():
-            chart["labels"].append(me.model.name)
-            for metric, (has_metric, pos, _) in CHART_METRICS.items():
-                # TODO: this could produce lopsided graphs
-                if not getattr(me, has_metric):
+        models = self.object.model_evaluations.all()
+        labels = [
+            label
+            for label, (has_metric, _, _) in CHART_METRICS.items()
+            if getattr(models[0], has_metric)
+        ]
+        model_colors = {}
+        for model in models:
+            # Create a color for each model
+            color = colors[color_index % len(colors)]
+            color_index += 1
+            model_colors[str(model.id)] = color
+
+        # Create chart data
+        datasets = []
+        for model in models:
+            dataset = {"label": model.model.name, "data": [], "trueValues": []}
+
+            for metric_name, (
+                processed,
+                true_value,
+                normalized,
+            ) in CHART_METRICS.items():
+                if metric_name not in labels:
                     continue
 
-                for ds in chart["datasets"]:
-                    if ds["label"] == metric:
-                        break
+                if getattr(model, processed):
+                    dataset["data"].append(getattr(model, normalized))
+                    true_value = round(getattr(model, true_value), 2)
+                    if metric_name in BOOLEAN_METRICS:
+                        # Handle percentages
+                        true_value = f"{true_value} %"
+                    dataset["trueValues"].append(true_value)
                 else:
-                    ds = {"label": metric, "data": []}
-                    chart["datasets"].append(ds)
+                    dataset["data"].append(0)
+                    dataset["trueValues"].append(0)
 
-                ds["data"].append(getattr(me, "percent_"+pos.removeprefix("n_"), 0))
+                dataset["borderColor"] = model_colors[str(model.id)]
+                dataset["backgroundColor"] = model_colors[str(model.id)]
 
-        # Convert to chart data
-        return {key: json.dumps(val) for key, val in chart.items()}
+            datasets.append(dataset)
+
+        # Ensure dataset values sum to 1 for each metric
+        for i in range(len(labels)):
+            # Get the values for this metric across all datasets
+            total = sum(
+                [
+                    datasets[j]["data"][i]
+                    for j in range(len(datasets))
+                    if len(datasets[j]["data"]) > 0
+                ]
+            )
+            if total > 0:
+                for j in range(len(datasets)):
+                    if len(datasets[j]["data"]) > 0:
+                        datasets[j]["data"][i] /= total
+                        datasets[j]["data"][i] = round(datasets[j]["data"][i], 2)
+
+        return {"labels": labels, "datasets": datasets}
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["page_id"] = "evaluation"
         context["chart"] = self.get_chart_data()
         return context
+
+
+class EvaluationDelete(DeleteView):
+    """
+    Delete an evaluation and all associated data.
+    """
+
+    model = Evaluation
+    template_name = "evaluation/list.html"
+    success_url = reverse_lazy("evaluations-list")
+
+    def get(self, *args, **kwargs):
+        """
+        Prevent GET requests to delete an evaluation.
+        """
+        return HttpResponseNotAllowed(["POST"])
 
 
 class DownloadPrompts(View):
@@ -178,7 +321,7 @@ class DownloadPrompts(View):
                 "notes": prompt.notes,
                 "expected_output_type": prompt.expected_output_type,
                 "expected_output": prompt.expected_output,
-                "expected_labe": prompt.expected_label
+                "expected_label": prompt.expected_label,
             }
 
             reply.write(json.dumps(data) + "\n")
@@ -247,29 +390,51 @@ class LLMDetail(DetailView):
     context_object_name = "llm"
 
     def get_chart_data(self):
+        # Colors
+        # TODO: Use an actual color palette that we can dynamically select colors from
+        colors = [
+            "rgb(255, 99, 132)",
+            "rgb(54, 162, 235)",
+            "rgb(255, 206, 86)",
+            "rgb(75, 192, 192)",
+            "rgb(153, 102, 255)",
+        ]
+        color_index = 0
+
         # Perform Aggregation
-        counts = defaultdict(lambda: defaultdict(int))
+        chart = {"labels": [], "datasets": []}
+        evaluations = {}
+        normalized_values = defaultdict(lambda: defaultdict(float))
         for me in self.object.model_evaluations.all():
-            for metric, (has_metric, pos, neg) in CHART_METRICS.items():
-                if getattr(me, has_metric):
-                    counts[metric]["pos"] += getattr(me, pos)
-                    counts[metric]["neg"] += getattr(me, neg)
+            for metric, (has_metric, value, normalized) in CHART_METRICS.items():
+                if not getattr(me, has_metric):
+                    continue
 
-        # Convert to chart data
-        data = {
-            "labels": [],
-            "positive": [],
-            "negative": []
-        }
+                # Get the normalized value
+                normalized_value = getattr(me, normalized)
+                normalized_values[metric][str(me.id)] = normalized_value
+                evaluations[str(me.id)] = me.evaluation.name
 
-        for metric, count in counts.items():
-            data["labels"].append(metric)
-            data["positive"].append(count["pos"])
-            data["negative"].append(count["neg"])
+        # Create the chart data
+        for metric, values in normalized_values.items():
+            chart["labels"].append(metric)
+            for model, value in values.items():
+                for ds in chart["datasets"]:
+                    if ds["label"] == evaluations[model]:
+                        break
+                else:
+                    color = colors[color_index % len(colors)]
+                    color_index += 1
+                    ds = {
+                        "label": evaluations[model],
+                        "data": [],
+                        "borderColor": color,
+                        "backgroundColor": color,
+                    }
+                    chart["datasets"].append(ds)
+                ds["data"].append(value)
 
-        return {
-            key: json.dumps(val) for key, val in data.items()
-        }
+        return {key: json.dumps(val) for key, val in chart.items()}
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -281,6 +446,7 @@ class LLMDetail(DetailView):
 ##########################################################################
 ## Response Views
 ##########################################################################
+
 
 class ResponseDetail(DetailView):
 
@@ -298,6 +464,7 @@ class ResponseDetail(DetailView):
 ## Review Tasks
 ##########################################################################
 
+
 class CreateReviewTask(FormView):
 
     form_class = CreateReviewForm
@@ -311,7 +478,7 @@ class CreateReviewTask(FormView):
         raise SuspiciousOperation("unable to create review task for logged in user")
 
     def get(self, *args, **kwargs):
-        return HttpResponseNotAllowed(['POST'])
+        return HttpResponseNotAllowed(["POST"])
 
 
 class ReviewTaskDetail(DetailView):
@@ -326,7 +493,10 @@ class ReviewTaskDetail(DetailView):
         if query:
             try:
                 obj = Response.objects.get(pk=query)
-                if obj.model != self.object.model or obj.prompt.evaluation != self.object.evaluation:
+                if (
+                    obj.model != self.object.model
+                    or obj.prompt.evaluation != self.object.evaluation
+                ):
                     raise Http404
                 return obj
             except Response.DoesNotExist:
@@ -343,4 +513,49 @@ class ReviewTaskDetail(DetailView):
         context = super().get_context_data(**kwargs)
         context["page_id"] = "review"
         context["response"] = self.get_response_object()
+        context["form"] = UpdateResponseReviewForm(
+            instance=self.object.response_reviews.filter(
+                review=context["review"], response=context["response"]
+            ).first(),
+        )
+        context["form"].fields["response"].initial = context["response"]
+        context["form"].fields["review"].initial = context["review"]
         return context
+
+
+class UpdateResponseReview(UpdateView):
+    """
+    Update the review of a response.
+    """
+
+    model = ResponseReview
+    form_class = UpdateResponseReviewForm
+    success_url = reverse_lazy("dashboard")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["response"] = self.get_object().response
+        context["review"] = self.get_object().review
+        return context
+
+    def get_success_url(self):
+        review_id = self.request.POST.get("review")
+        response_id = self.request.POST.get("response")
+        url = reverse_lazy("review-task", kwargs={"pk": review_id})
+        if response_id:
+            url += f"?response={response_id}"
+        return url
+
+    def get_object(self):
+        obj, _ = ResponseReview.objects.get_or_create(
+            review_id=self.request.POST.get("review"),
+            response_id=self.request.POST.get("response"),
+        )
+        return obj
+
+    def form_valid(self, form):
+        form.save()
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        raise SuspiciousOperation("unable to update review for logged in user")

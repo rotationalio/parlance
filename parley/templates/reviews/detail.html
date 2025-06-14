@@ -200,6 +200,195 @@
   </div>
 </div><!-- model output ends -->
 
+
+<!-- evaluation detail starts -->
+<div class="row">
+  <div class="col-12">
+    <div class="card" id="evaluation">
+      <form action="{% url 'update-review' review.id %}" method="post">
+        <div class="card-header">
+          <h4 class="card-header-title">
+            Evaluation
+            {% if form.is_complete %}
+            <span class="badge bg-success-soft ms-auto">Completed</span>
+            {% else %}
+            <span class="badge bg-danger-soft ms-auto">Needs Review</span>
+            {% endif %}
+          </h4>
+          <button class="btn btn-sm btn-secondary" data-bs-toggle="collapse" data-bs-target="#evaluationForm" type="button">
+            Toggle
+          </button>
+        </div>
+        <div id="evaluationForm" class="card-body collapse {% if not form.is_complete %}show{% endif %}" data-bs-parent="#evaluation">
+          {% csrf_token %}
+          <input type="hidden" name="response" value="{{ response.id }}">
+          <input type="hidden" name="review" value="{{ review.id }}">
+
+            <!-- Boolean Toggle Buttons -->
+          <div class="mb-3">
+            <label class="form-label">Readability</label>
+            <div class="form-text">Is the model output easy to read and understand?</div>
+            <div class="btn-group w-25" role="group" aria-label="Readability Toggle">
+              <input type="radio" class="btn-check" name="{{ form.is_readable.name }}" id="readable_true" value="true" {% if form.is_readable.value %}checked{% endif %}>
+              <label class="btn btn-outline-primary" for="readable_true">Readable</label>
+              
+              <input type="radio" class="btn-check" name="{{ form.is_readable.name }}" id="readable_false" value="false" {% if form.is_readable.value == False %}checked{% endif %}>
+              <label class="btn btn-outline-secondary" for="readable_false">Not Readable</label>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Factual Correctness</label>
+            <div class="form-text">Is the model output factually correct?</div>
+            <div class="btn-group w-25" role="group" aria-label="Factual Toggle">
+              <input type="radio" class="btn-check" name="{{ form.is_factual.name }}" id="factual_true" value="true" {% if form.is_factual.value %}checked{% endif %}>
+              <label class="btn btn-outline-primary" for="factual_true">Factually Correct</label>
+              
+              <input type="radio" class="btn-check" name="{{ form.is_factual.name }}" id="factual_false" value="false" {% if form.is_factual.value == False %}checked{% endif %}>
+              <label class="btn btn-outline-secondary" for="factual_false">Incorrect</label>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Style</label>
+            <div class="form-text">Does the model output match the expected style?</div>
+            <div class="btn-group w-25" role="group" aria-label="Style Toggle">
+              <input type="radio" class="btn-check" name="{{ form.is_correct_style.name }}" id="style_true" value="true" {% if form.is_correct_style.value %}checked{% endif %}>
+              <label class="btn btn-outline-primary" for="style_true">Correct Style</label>
+              
+              <input type="radio" class="btn-check" name="{{ form.is_correct_style.name }}" id="style_false" value="false" {% if form.is_correct_style.value == False %}checked{% endif %}>
+              <label class="btn btn-outline-secondary" for="style_false">Incorrect Style</label>
+            </div>
+          </div>
+
+          <!-- Helpfulness Slider -->
+          <div class="mb-3">
+            <label class="form-label">Helpfulness</label>
+            <div class="form-text">The model output is helpful</div>
+            <div class="range-slider w-25">
+              <input type="range" class="form-range" name="{{ form.helpfulness.name }}" 
+                    min="1" max="5" step="1" value="{{ form.helpfulness.value|default:3 }}"
+                    id="helpfulnessSlider">
+              <div class="range-value text-left">
+                <span id="helpfulnessValue">{{ form.helpfulness.value|default:3 }}</span>
+            </div>
+          </div>
+
+          </div>
+          <button type="submit" class="btn btn-sm btn-primary ms-2">
+            Save
+          </button>
+        </div>
+        <div class="card-footer">
+          {% if form.is_readable.value is not None %}
+          {% if form.is_readable.value %}
+            <span class="badge bg-success-soft ms-auto">
+              <i class="fe fe-check"></i>
+              Readable
+            </span>
+          {% else %}
+            <span class="badge bg-danger-soft ms-auto">
+              <i class="fe fe-x"></i>
+              Not Readable
+            </span>
+          {% endif %}
+          {% endif %}
+
+          {% if form.is_factual.value is not None %}
+          {% if form.is_factual.value %}
+            <span class="badge bg-success-soft ms-auto">
+              <i class="fe fe-check"></i>
+              Factually Correct
+            </span>
+          {% else %}
+            <span class="badge bg-danger-soft ms-auto">
+              <i class="fe fe-x"></i>
+              Incorrect
+            </span>
+          {% endif %}
+          {% endif %}
+
+          {% if form.is_correct_style.value is not None %}
+          {% if form.is_correct_style.value %}
+            <span class="badge bg-success-soft ms-auto">
+              <i class="fe fe-check"></i>
+              Correct Style
+            </span>
+          {% else %}
+            <span class="badge bg-danger-soft ms-auto">
+              <i class="fe fe-x"></i>
+              Incorrect Style
+            </span>
+          {% endif %}
+          {% endif %}
+
+          {% if form.helpfulness.value is not None %}
+          {% if form.helpfulness.value <= 2 %}
+            <span class="badge bg-danger-soft ms-auto">
+              <i class="fe fe-x"></i>
+              Not Helpful
+            </span>
+          {% elif form.helpfulness.value == 3 %}
+            <span class="badge bg-info-soft ms-auto">
+              Neutral Helpfulness
+            </span>
+          {% else %}
+            <span class="badge bg-success-soft ms-auto">
+              <i class="fe fe-check"></i>
+              Helpful
+            </span>
+          {% endif %}
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<hr />
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the slider value
+    const slider = document.getElementById('helpfulnessSlider');
+    const display = document.getElementById('helpfulnessValue');
+    const likertValues = {
+      1: 'Strongly Disagree',
+      2: 'Disagree',
+      3: 'Neutral',
+      4: 'Agree',
+      5: 'Strongly Agree'
+    };
+    const likertColors = {
+      1: 'likert-strongly-disagree',
+      2: 'likert-disagree',
+      3: 'likert-neutral',
+      4: 'likert-agree',
+      5: 'likert-strongly-agree'
+    };
+
+    function updateDisplay(value) {
+      // Update text content
+      display.textContent = likertValues[value];
+      
+      // Remove all possible color classes
+      Object.values(likertColors).forEach(className => {
+        display.classList.remove(className);
+      });
+      
+      // Add the appropriate color class
+      display.classList.add(likertColors[value]);
+    }
+
+    // Set initial value
+    updateDisplay(slider.value);
+
+    // Update on change
+    slider.addEventListener('input', function() {
+      updateDisplay(this.value);
+    });
+  });
+</script>
+
 <!-- page controls -->
 <div class="row pb-4">
   <div class="col-12">

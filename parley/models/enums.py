@@ -50,3 +50,16 @@ class OutputFormat(models.TextChoices):
     CSV = ("csv", _("CSV"))
     IMAGE = ("img", _("image"))
     DATA_VIZ = ("dviz", _("Data Visualization"))
+
+
+class FivePointLikert(models.IntegerChoices):
+    """
+    FivePointLikert is a standard 5-point Likert scale for user evaluations, where 1 is
+    strongly disagree and 5 is strongly agree.
+    """
+
+    STRONGLY_DISAGREE = (1, _("Strongly Disagree"))
+    DISAGREE = (2, _("Disagree"))
+    NEUTRAL = (3, _("Neutral"))
+    AGREE = (4, _("Agree"))
+    STRONGLY_AGREE = (5, _("Strongly Agree"))

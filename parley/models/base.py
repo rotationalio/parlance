@@ -26,6 +26,7 @@ from django.db import models
 ## Base Model
 ##########################################################################
 
+
 class BaseModel(models.Model):
     """
     In order to make it easier to ingest data and audit records added to parlance, the

@@ -32,36 +32,82 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "-C", "--cyberjudge", action="store_true",
+            "-C",
+            "--cyberjudge",
+            action="store_true",
             help="run the cyberjudge evaluations before metrics",
         )
         parser.add_argument(
-            "-L", "--labels", action="store_true",
-            help="run the simple label correctness evaluation before metrics"
+            "-L",
+            "--labels",
+            action="store_true",
+            help="run the simple label correctness evaluation before metrics",
         )
         parser.add_argument(
-            "-O", "--output-type", action="store_true",
+            "-O",
+            "--output-type",
+            action="store_true",
             help="evaluate output type format before metrics",
         )
         parser.add_argument(
-            "-S", "--sensitive", action="store_true",
-            help="evaluation sensitive leaks before metrics"
+            "-S",
+            "--sensitive",
+            action="store_true",
+            help="evaluation sensitive leaks before metrics",
         )
         parser.add_argument(
-            "-A", "--all", action="store_true",
+            "-R",
+            "--readable-threshold",
+            type=float,
+            default=0.5,
+            help="agreement threshold for readability evaluation",
+        )
+        parser.add_argument(
+            "-F",
+            "--factual-threshold",
+            type=float,
+            default=0.5,
+            help="agreement threshold for factual evaluation",
+        )
+        parser.add_argument(
+            "-T",
+            "--style-threshold",
+            type=float,
+            default=0.5,
+            help="agreement threshold for style evaluation",
+        )
+        parser.add_argument(
+            "-M",
+            "--helpfulness-metric",
+            type=str,
+            default="mean",
+            choices=["mean", "median"],
+            help="metric to use for helpfulness evaluation",
+        )
+        parser.add_argument(
+            "-A",
+            "--all",
+            action="store_true",
             help="run the evaluation metrics across all model evaluations",
         )
         parser.add_argument(
-            "-y", "--yes", action="store_true",
+            "-y",
+            "--yes",
+            action="store_true",
             help="do not prompt for input on the command line",
         )
         parser.add_argument(
-            "-f", "--filter", type=str, metavar="name",
-            help="filter the model evaluations to run based on evaluation name"
+            "-f",
+            "--filter",
+            type=str,
+            metavar="name",
+            help="filter the model evaluations to run based on evaluation name",
         )
         parser.add_argument(
-            "model_evaluations", nargs="*", metavar="uuid",
-            help="specify the model evaluation(s) to run analytics for"
+            "model_evaluations",
+            nargs="*",
+            metavar="uuid",
+            help="specify the model evaluation(s) to run analytics for",
         )
         return super().add_arguments(parser)
 
@@ -71,7 +117,9 @@ class Command(BaseCommand):
 
         # Lookup the model evaluations specified by the user in the database
         model_evaluations = self.get_queryset(**opts)
-        n_model_evals = model_evaluations.count() if model_evaluations is not None else 0
+        n_model_evals = (
+            model_evaluations.count() if model_evaluations is not None else 0
+        )
         if n_model_evals == 0:
             raise CommandError("no model evaluations found for criteria")
 
@@ -82,9 +130,7 @@ class Command(BaseCommand):
         # Check that the user wants to continue
         if not opts["yes"]:
             if not self.confirm("continue with analysis?"):
-                self.stdout.write(
-                    self.style.WARNING("canceled operation by user")
-                )
+                self.stdout.write(self.style.WARNING("canceled operation by user"))
 
         # Prepare pre-checks
         self._sensitive = None
@@ -99,12 +145,26 @@ class Command(BaseCommand):
                     for check in prechecks:
                         check(response)
 
+            # Compute annotator agreement for the model evaluation
+            for response in me.responses():
+                response.is_factual = response.agree_boolean(
+                    "is_factual", true_threshold=opts["factual_threshold"]
+                )
+                response.is_readable = response.agree_boolean(
+                    "is_readable", true_threshold=opts["readable_threshold"]
+                )
+                response.is_correct_style = response.agree_boolean(
+                    "is_correct_style", true_threshold=opts["style_threshold"]
+                )
+                response.helpfulness = response.agree_likert(
+                    "helpfulness", method=opts["helpfulness_metric"]
+                )
+                response.save()
+
             # Cache metrics for the evaluation
             cache_metrics(me)
 
-        self.stdout.write(
-            self.style.SUCCESS("successfully completed analysis")
-        )
+        self.stdout.write(self.style.SUCCESS("successfully completed analysis"))
 
     def validate_input(self, *args, **opts):
         if opts["cyberjudge"] and opts["labels"]:

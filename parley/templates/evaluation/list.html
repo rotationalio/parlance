@@ -10,10 +10,19 @@
 
     <div class="card">
       <div class="card-header">
-        <h4 class="card-header-title">
-          Active Evaluations
-        </h4>
-
+        <div class="row align-items-center">
+          <div class="col">
+            <h4 class="card-header-title">
+              Active Evaluations
+            </h4>
+          </div>
+          <div class="col-auto">
+            <!-- New Evaluation Button -->
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newEvaluationModal">
+              <i class="fe fe-plus"></i> New Evaluation
+            </button>
+          </div>
+        </div>
       </div>
       <div class="card-body">
         <ul class="list-group list-group-lg list-group-flush list my-n4">
@@ -67,6 +76,13 @@
                         Edit in CMS
                       </a>
                       {% endif %}
+                      <!-- Replace the existing delete link in the dropdown menu -->
+                      <a href="#" class="dropdown-item text-danger"
+                         onclick="confirmDelete('{% url 'evaluation-delete' evaluation.pk %}', '{{ evaluation.name|escapejs }}', {{ evaluation.prompts.count }}, {{ evaluation.llms.count }})"
+                        data-bs-toggle="modal"
+                        data-bs-target="#deleteEvaluationModal">
+                        Delete Evaluation
+                      </a>
                       <a href="{{ evaluation.get_absolute_url }}" class="dropdown-item">
                         View Models
                       </a>
@@ -90,4 +106,105 @@
 
   </div>
 </div><!-- evaluations list ends -->
+
+<!-- New Evaluation Modal -->
+<div class="modal fade" id="newEvaluationModal" tabindex="-1" role="dialog" aria-labelledby="newEvaluationModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <form method="POST" action="{% url 'evaluation-create' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="newEvaluationModalLabel">Create a New Evaluation</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Create a name for this evaluation</label>
+            <input type="text" class="form-control" name="name" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">What task or agent is this evaluation for?</label>
+            <input class="form-control" name="task" rows="3" required></input>
+          </div>
+          <div>
+            <label class="form-label">Provide a brief description of this evaluation (optional)</label>
+            <textarea class="form-control" name="description" rows="3"></textarea>
+          </div>
+          <!-- Add file upload fields -->
+          <div class="mb-3">
+            <label class="form-label">Upload Models (JSONL)</label>
+            <input type="file" class="form-control" name="models_file" accept=".jsonl" required>
+            <div class="form-text">Upload a .jsonl file containing model definitions</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Upload Prompts (JSONL)</label>
+            <input type="file" class="form-control" name="prompts_file" accept=".jsonl" required>
+            <div class="form-text">Upload a .jsonl file containing prompts</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Evaluation</button>
+        </div>
+        <div class="alerts">
+          {% if form.errors %}
+          {% for _, errors in form.errors.items %}
+          {% for error in errors %}
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Invalid Input:</strong> {{ error }}.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+          {% endfor %}
+          {% endfor %}
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Evaluation Modal -->
+<div class="modal fade" id="deleteEvaluationModal" tabindex="-1" role="dialog" aria-labelledby="deleteEvaluationModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <form method="POST" action="{% url 'evaluation-delete'}" id="deleteEvaluationForm">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteEvaluationModalLabel">Delete Evaluation</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to delete evaluation <strong><span id="evaluationName"></span></strong>?</p>
+          <p class="text-danger"><strong>This will permanently delete:</strong></p>
+          <ul class="text-danger">
+            <li><strong id="promptCount"></strong> prompts</li>
+            <li><strong id="modelCount"></strong> models</li>
+          </ul>
+          <button type="submit" class="btn btn-danger">Delete Evaluation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  function confirmDelete(deleteUrl, name, promptCount, modelCount) {
+    document.getElementById('deleteEvaluationForm').action = deleteUrl;
+    document.getElementById('evaluationName').textContent = name;
+    document.getElementById('promptCount').textContent = promptCount;
+    document.getElementById('modelCount').textContent = modelCount;
+  }
+</script>
+
+{% if form.errors %}
+<script>
+  window.onload = function() {
+    if (window.jQuery()) {
+      // Show the modal if there are form errors
+      $('#newEvaluationModal').modal('show');
+    }
+  };
+</script>
+{% endif %}
+
 {% endblock %}

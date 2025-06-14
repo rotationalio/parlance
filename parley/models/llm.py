@@ -22,17 +22,20 @@ import json
 
 from .base import BaseModel
 from .enums import OutputFormat
+from .enums import FivePointLikert
 
 from django.db import models
 from django.urls import reverse
 from django.templatetags.static import static
 
+from parley.models.user import ResponseReview
 from parley.validators import validate_semver
 
 
 ##########################################################################
 ## Helpers
 ##########################################################################
+
 
 def llm_cover_upload_path(instance, filename):
     _, ext = os.path.splitext(filename)
@@ -42,6 +45,7 @@ def llm_cover_upload_path(instance, filename):
 ##########################################################################
 ## Models
 ##########################################################################
+
 
 class LLM(BaseModel):
     """
@@ -138,7 +142,8 @@ class LLM(BaseModel):
     )
 
     evaluations = models.ManyToManyField(
-        'parley.Evaluation', through='parley.ModelEvaluation',
+        "parley.Evaluation",
+        through="parley.ModelEvaluation",
     )
 
     class Meta:
@@ -246,20 +251,33 @@ class Response(BaseModel):
         help_text="Does the output contain sensitive data that should not be leaked?",
     )
 
-    # TODO: set this based on annotator agreement
-    is_confabulation = models.BooleanField(
+    is_factual = models.BooleanField(
         null=True,
         default=None,
         blank=True,
-        help_text="Is the output a hallucination or confabulation?",
+        help_text="Is the output factually correct?",
     )
 
-    # TODO: set this based on annotator agreement
     is_readable = models.BooleanField(
         null=True,
         default=None,
         blank=True,
         help_text="Does the output contain grammatically correct, understandable language?",
+    )
+
+    is_correct_style = models.BooleanField(
+        null=True,
+        default=None,
+        blank=True,
+        help_text="Is the output written in the correct style or tone?",
+    )
+
+    helpfulness = models.IntegerField(
+        choices=FivePointLikert.choices,
+        null=True,
+        default=None,
+        blank=True,
+        help_text="This output is helpful to the reader",
     )
 
     max_new_tokens = models.IntegerField(
@@ -302,6 +320,65 @@ class Response(BaseModel):
     @property
     def evaluation(self):
         return self.prompt.evaluation
+
+    def agree_boolean(self, key, true_threshold=0.5):
+        """
+        Compute agreement for a boolean field across all user reviews. If threshold is
+        between 0 and 1 then the proportion of reviews must have positive votes to be
+        considered true. If the threshold is >= 1 then the fied must have that number
+        of absolute votes to be considered true. None is returned if there are no
+        reviews for this response to avoid misleading results.
+        """
+
+        if true_threshold < 0:
+            raise ValueError("Threshold must be greater than or equal to 0")
+
+        true_count = ResponseReview.objects.filter(response=self, **{key: True}).count()
+        false_count = ResponseReview.objects.filter(
+            response=self, **{key: False}
+        ).count()
+        if true_threshold < 1:
+            # Consider the proportion of true votes
+            total_count = true_count + false_count
+            if total_count == 0:
+                return None
+            proportion = float(true_count) / float(total_count)
+            return proportion >= true_threshold
+        else:
+            # Consider the absolute number of true votes
+            if true_count >= true_threshold:
+                return True
+            if false_count >= true_threshold:
+                return False
+            return None
+
+    def agree_likert(self, key, method="mean"):
+        """
+        Compute agreement for a likert scale field across all user reviews, either by "mean" or "median".
+        """
+
+        if method not in ("mean", "median"):
+            raise ValueError("Method must be either mean or median")
+
+        # Get all the reviews for this response
+        reviews = (
+            ResponseReview.objects.filter(response=self)
+            .values_list(key, flat=True)
+            .all()
+        )
+
+        # Filter out None values
+        reviews = [review for review in reviews if review is not None]
+
+        # If there are no reviews then return None
+        if len(reviews) == 0:
+            return None
+
+        # Compute the mean or median of the reviews
+        if method == "mean":
+            return sum(reviews) / len(reviews)
+        elif method == "median":
+            return sorted(reviews)[len(reviews) // 2]
 
     def get_previous(self):
         try:
@@ -384,96 +461,171 @@ class ModelEvaluation(BaseModel):
 
     # Cache Info
     metrics_cached = models.BooleanField(
-        default=False, editable=False,
+        default=False,
+        editable=False,
     )
 
     # Cache Info
     metrics_last_cached_on = models.DateTimeField(
-        default=None, null=True, editable=False,
+        default=None,
+        null=True,
+        editable=False,
     )
 
     # Cached metric
     n_prompts = models.IntegerField(
-        default=0, editable=False,
+        default=0,
+        editable=False,
     )
 
     # Cached metric
     n_responses = models.IntegerField(
-        default=0, editable=False,
+        default=0,
+        editable=False,
     )
 
     # Cached metric
     n_similar = models.IntegerField(
-        default=None, null=True, blank=True, editable=False,
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
     )
 
     # Cached metric
     n_not_similar = models.IntegerField(
-        default=None, null=True, blank=True, editable=False,
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
     )
 
     # Cached metric
     n_labeled_correctly = models.IntegerField(
-        default=None, null=True, blank=True, editable=False,
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
     )
 
     # Cached metric
     n_labeled_incorrectly = models.IntegerField(
-        default=None, null=True, blank=True, editable=False,
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
     )
 
     # Cached metric
     n_valid_output_type = models.IntegerField(
-        default=None, null=True, blank=True, editable=False,
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
     )
 
     # Cached metric
     n_invalid_output_type = models.IntegerField(
-        default=None, null=True, blank=True, editable=False,
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
     )
 
     # Cached metric
     n_leaks_sensitive = models.IntegerField(
-        default=None, null=True, blank=True, editable=False,
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
     )
 
     # Cached metric
     n_no_sensitive_leaks = models.IntegerField(
-        default=None, null=True, blank=True, editable=False,
-    )
-
-    # Cached metric
-    n_confabulations = models.IntegerField(
-        default=None, null=True, blank=True, editable=False,
-    )
-
-    # Cached metric
-    n_not_confabulation = models.IntegerField(
-        default=None, null=True, blank=True, editable=False,
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
     )
 
     # Cached metric
     n_readable = models.IntegerField(
-        default=None, null=True, blank=True, editable=False,
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
     )
 
     # Cached metric
     n_not_readable = models.IntegerField(
-        default=None, null=True, blank=True, editable=False,
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
+    )
+
+    # Cached metric
+    n_factual = models.IntegerField(
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
+    )
+
+    # Cached metric
+    n_not_factual = models.IntegerField(
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
+    )
+
+    # Cached metric
+    n_correct_style = models.IntegerField(
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
+    )
+
+    # Cached metric
+    n_incorrect_style = models.IntegerField(
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
+    )
+
+    # Cached metric
+    mean_helpfulness = models.FloatField(
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
+    )
+
+    # Cached metric
+    median_helpfulness = models.FloatField(
+        default=None,
+        null=True,
+        blank=True,
+        editable=False,
     )
 
     class Meta:
         db_table = "model_evaluations"
         ordering = ("-created",)
         get_latest_by = "created"
-        unique_together = ('model', 'evaluation')
+        unique_together = ("model", "evaluation")
 
     def prompts(self):
         return self.evaluation.prompts.filter(exclude=False)
 
     def responses(self):
         return Response.objects.filter(
-            model=self.model, prompt__evaluation=self.evaluation, prompt__exclude=False,
+            model=self.model,
+            prompt__evaluation=self.evaluation,
+            prompt__exclude=False,
         )
 
     @property
@@ -491,6 +643,10 @@ class ModelEvaluation(BaseModel):
         return self.n_similar is not None and self.n_not_similar is not None
 
     @property
+    def similarity_normalized(self):
+        return self._normalize(self.percent_similar)
+
+    @property
     def percent_similar(self):
         return self._percent(self.n_similar, self.n_not_similar)
 
@@ -500,7 +656,14 @@ class ModelEvaluation(BaseModel):
 
     @property
     def labels_processed(self):
-        return self.n_labeled_correctly is not None and self.n_labeled_incorrectly is not None
+        return (
+            self.n_labeled_correctly is not None
+            and self.n_labeled_incorrectly is not None
+        )
+
+    @property
+    def labels_normalized(self):
+        return self._normalize(self.percent_labeled_correctly)
 
     @property
     def percent_labeled_correctly(self):
@@ -512,7 +675,14 @@ class ModelEvaluation(BaseModel):
 
     @property
     def valid_output_processed(self):
-        return self.n_valid_output_type is not None and self.n_invalid_output_type is not None
+        return (
+            self.n_valid_output_type is not None
+            and self.n_invalid_output_type is not None
+        )
+
+    @property
+    def valid_output_normalized(self):
+        return self._normalize(self.percent_valid_output_type)
 
     @property
     def percent_valid_output_type(self):
@@ -524,7 +694,13 @@ class ModelEvaluation(BaseModel):
 
     @property
     def sensitive_processed(self):
-        return self.n_leaks_sensitive is not None and self.n_no_sensitive_leaks is not None
+        return (
+            self.n_leaks_sensitive is not None and self.n_no_sensitive_leaks is not None
+        )
+
+    @property
+    def sensitive_normalized(self):
+        return self._normalize(self.percent_no_sensitive_leaks)
 
     @property
     def percent_leaks_sensitive(self):
@@ -535,20 +711,28 @@ class ModelEvaluation(BaseModel):
         return self._percent(self.n_no_sensitive_leaks, self.n_leaks_sensitive)
 
     @property
-    def confabulations_processed(self):
-        return self.n_confabulations is not None and self.n_not_confabulation is not None
+    def factual_processed(self):
+        return self.n_factual is not None and self.n_not_factual is not None
 
     @property
-    def percent_confabulations(self):
-        return self._percent(self.n_confabulations, self.n_not_confabulation)
+    def factual_normalized(self):
+        return self._normalize(self.percent_factual)
 
     @property
-    def percent_not_confabulation(self):
-        return self._percent(self.n_not_confabulation, self.n_confabulations)
+    def percent_factual(self):
+        return self._percent(self.n_factual, self.n_not_factual)
+
+    @property
+    def percent_not_factual(self):
+        return self._percent(self.n_not_factual, self.n_factual)
 
     @property
     def readability_processed(self):
         return self.n_readable is not None and self.n_not_readable is not None
+
+    @property
+    def readability_normalized(self):
+        return self._normalize(self.percent_readable)
 
     @property
     def percent_readable(self):
@@ -557,6 +741,34 @@ class ModelEvaluation(BaseModel):
     @property
     def percent_not_readable(self):
         return self._percent(self.n_not_readable, self.n_readable)
+
+    @property
+    def style_processed(self):
+        return self.n_correct_style is not None and self.n_incorrect_style is not None
+
+    @property
+    def style_normalized(self):
+        return self._normalize(self.percent_correct_style)
+
+    @property
+    def percent_correct_style(self):
+        return self._percent(self.n_correct_style, self.n_incorrect_style)
+
+    @property
+    def percent_incorrect_style(self):
+        return self._percent(self.n_incorrect_style, self.n_correct_style)
+
+    @property
+    def helpfulness_processed(self):
+        return self.mean_helpfulness is not None and self.median_helpfulness is not None
+
+    @property
+    def mean_helpfulness_normalized(self):
+        return self._normalize(self.mean_helpfulness, min_value=1, max_value=5)
+
+    @property
+    def median_helpfulness_normalized(self):
+        return self._normalize(self.median_helpfulness, min_value=1, max_value=5)
 
     def __str__(self):
         return f"{self.evaluation.name} for {self.model.name}"
@@ -572,4 +784,21 @@ class ModelEvaluation(BaseModel):
         if total == 0:
             return 0.0
 
-        return round((float(field) / float(total))*100, 2)
+        return round((float(field) / float(total)) * 100, 2)
+
+    def _normalize(self, value, min_value=0, max_value=100):
+        """
+        Normalize a value that exists in the range [min_value, max_value] to a value
+        in the range [0, 1].
+        """
+        if value is None:
+            return None
+        if value < min_value or value > max_value:
+            raise ValueError(
+                f"Value {value} is outside the range [{min_value}, {max_value}]"
+            )
+        if min_value == max_value:
+            return 0.0
+        return round(
+            (float(value) - float(min_value)) / (float(max_value) - float(min_value)), 2
+        )
