@@ -1,7 +1,7 @@
 ## Web Application
 dj-database-url==2.2.0
 Django==5.2.3
-django-kubernetes==1.0.1
+django-kubernetes==1.1.0
 gunicorn==23.0.0
 whitenoise==6.7.0
 pillow==10.4.0
@@ -39,6 +39,7 @@ typing_extensions==4.12.2
 ## Editing Dependencies (uncomment for VSCode)
 # black==24.8.0
 # flake8==7.1.1
+# django-browser-reload==1.18.0
 
 ## Editing Subdependencies
 # click==8.1.7
